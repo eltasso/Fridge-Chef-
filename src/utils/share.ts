@@ -1,24 +1,27 @@
-import * as Sharing from 'expo-sharing';
+import { Platform } from 'react-native';
 import { Recipe } from '../types';
 
-export async function shareRecipe(recipe: Recipe): Promise<void> {
-  const text = buildRecipeText(recipe);
-  const isAvailable = await Sharing.isAvailableAsync();
-
-  if (!isAvailable) {
-    console.log('Sharing not available');
+async function shareText(title: string, text: string): Promise<void> {
+  if (Platform.OS === 'web') {
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      await navigator.share({ title, text });
+    } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      await navigator.clipboard.writeText(text);
+      alert('Copied to clipboard!');
+    }
     return;
   }
-
-  // Expo Sharing requires a file URI; we write a temp text approach via the Share API
   const { Share } = require('react-native');
-  await Share.share({ message: text, title: recipe.name });
+  await Share.share({ message: text, title });
+}
+
+export async function shareRecipe(recipe: Recipe): Promise<void> {
+  await shareText(recipe.name, buildRecipeText(recipe));
 }
 
 export async function shareShoppingList(items: { name: string; amount: string }[]): Promise<void> {
-  const { Share } = require('react-native');
   const text = `🛒 Shopping List\n\n${items.map((i) => `• ${i.amount} ${i.name}`).join('\n')}`;
-  await Share.share({ message: text, title: 'Shopping List' });
+  await shareText('Shopping List', text);
 }
 
 function buildRecipeText(recipe: Recipe): string {

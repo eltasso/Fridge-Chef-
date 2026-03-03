@@ -4,6 +4,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Text, View } from 'react-native';
 
 import { AppProvider, useApp } from './src/context/AppContext';
@@ -120,13 +121,15 @@ function MainTabs() {
 
 export default function App() {
   return (
-    <SafeAreaProvider>
-      <AppProvider>
-        <NavigationContainer>
-          <StatusBar style="dark" />
-          <MainTabs />
-        </NavigationContainer>
-      </AppProvider>
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <AppProvider>
+          <NavigationContainer>
+            <StatusBar style="dark" />
+            <MainTabs />
+          </NavigationContainer>
+        </AppProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }

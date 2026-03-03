@@ -4,6 +4,7 @@ import {
   Image, Alert, Animated,
 } from 'react-native';
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
+import { Platform } from 'react-native';
 import * as KeepAwake from 'expo-keep-awake';
 import { useApp } from '../context/AppContext';
 import { RootStackParamList, ShoppingItem } from '../types';
@@ -33,6 +34,7 @@ export default function RecipeDetailScreen() {
   const missingNames = new Set(missing.map((m) => m.name.toLowerCase()));
 
   useEffect(() => {
+    if (Platform.OS === 'web') return;
     if (cookMode) {
       KeepAwake.activateKeepAwakeAsync();
     } else {
