@@ -89,4 +89,5 @@ export type TabParamList = {
   HomeStack: undefined;
   Favorites: undefined;
   ShoppingList: undefined;
+  Profile: undefined;
 };

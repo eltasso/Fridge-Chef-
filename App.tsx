@@ -5,19 +5,22 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { Text, View } from 'react-native';
+import { Text, View, ActivityIndicator, StyleSheet } from 'react-native';
 
 import { AppProvider, useApp } from './src/context/AppContext';
 import { LanguageProvider, useTranslation } from './src/context/LanguageContext';
+import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { RootStackParamList, TabParamList } from './src/types';
 import { colors } from './src/styles/theme';
 
+import WelcomeScreen from './src/screens/WelcomeScreen';
 import OnboardingScreen from './src/screens/OnboardingScreen';
 import IngredientsScreen from './src/screens/IngredientsScreen';
 import RecipeListScreen from './src/screens/RecipeListScreen';
 import RecipeDetailScreen from './src/screens/RecipeDetailScreen';
 import FavoritesScreen from './src/screens/FavoritesScreen';
 import ShoppingListScreen from './src/screens/ShoppingListScreen';
+import ProfileScreen from './src/screens/ProfileScreen';
 
 const Stack = createStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<TabParamList>();
@@ -38,13 +41,8 @@ function ShoppingBadge() {
   const count = state.shoppingList.filter((i) => !i.checked).length;
   if (count === 0) return null;
   return (
-    <View style={{
-      position: 'absolute', top: -4, right: -8,
-      backgroundColor: colors.danger, borderRadius: 10,
-      minWidth: 18, height: 18, alignItems: 'center', justifyContent: 'center',
-      paddingHorizontal: 4,
-    }}>
-      <Text style={{ color: '#fff', fontSize: 11, fontWeight: '700' }}>{count}</Text>
+    <View style={badgeStyles.badge}>
+      <Text style={badgeStyles.badgeText}>{count}</Text>
     </View>
   );
 }
@@ -54,13 +52,8 @@ function FavoritesBadge() {
   const count = state.favorites.length;
   if (count === 0) return null;
   return (
-    <View style={{
-      position: 'absolute', top: -4, right: -8,
-      backgroundColor: colors.primary, borderRadius: 10,
-      minWidth: 18, height: 18, alignItems: 'center', justifyContent: 'center',
-      paddingHorizontal: 4,
-    }}>
-      <Text style={{ color: '#fff', fontSize: 11, fontWeight: '700' }}>{count}</Text>
+    <View style={[badgeStyles.badge, { backgroundColor: colors.primary }]}>
+      <Text style={badgeStyles.badgeText}>{count}</Text>
     </View>
   );
 }
@@ -117,7 +110,38 @@ function MainTabs() {
           ),
         }}
       />
+      <Tab.Screen
+        name="Profile"
+        component={ProfileScreen}
+        options={{
+          tabBarLabel: t('tab.profile'),
+          tabBarIcon: ({ color }) => <Text style={{ fontSize: 22, color }}>👤</Text>,
+        }}
+      />
     </Tab.Navigator>
+  );
+}
+
+function RootNavigator() {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FAFAFA' }}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <WelcomeScreen />;
+  }
+
+  return (
+    <NavigationContainer>
+      <StatusBar style="dark" />
+      <MainTabs />
+    </NavigationContainer>
   );
 }
 
@@ -126,14 +150,23 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <LanguageProvider>
-          <AppProvider>
-            <NavigationContainer>
-              <StatusBar style="dark" />
-              <MainTabs />
-            </NavigationContainer>
-          </AppProvider>
+          <AuthProvider>
+            <AppProvider>
+              <RootNavigator />
+            </AppProvider>
+          </AuthProvider>
         </LanguageProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
 }
+
+const badgeStyles = StyleSheet.create({
+  badge: {
+    position: 'absolute', top: -4, right: -8,
+    backgroundColor: colors.danger, borderRadius: 10,
+    minWidth: 18, height: 18, alignItems: 'center', justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  badgeText: { color: '#fff', fontSize: 11, fontWeight: '700' },
+});
