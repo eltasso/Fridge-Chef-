@@ -3,6 +3,7 @@ import {
   View, Text, StyleSheet, ScrollView, SafeAreaView,
   TouchableOpacity, Alert, Image,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation, useLanguage } from '../context/LanguageContext';
 import { useApp } from '../context/AppContext';
@@ -10,10 +11,11 @@ import { useApp } from '../context/AppContext';
 const APP_VERSION = '1.0.0';
 
 export default function ProfileScreen() {
-  const { user, signOut } = useAuth();
+  const { user, signOut, deleteAccount } = useAuth();
   const { t } = useTranslation();
   const { language, setLanguage } = useLanguage();
   const { state } = useApp();
+  const navigation = useNavigation<any>();
 
   const favCount = state.favorites.length;
   const shopCount = state.shoppingList.filter((i) => !i.checked).length;
@@ -46,19 +48,14 @@ export default function ProfileScreen() {
         {
           text: t('profile.deleteConfirm'),
           style: 'destructive',
-          onPress: () => signOut(), // for now just sign out
+          onPress: () => deleteAccount(),
         },
       ],
     );
   };
 
-  const handlePrivacy = () => {
-    Alert.alert(t('profile.privacy'), t('welcome.comingSoon'));
-  };
-
-  const handleTerms = () => {
-    Alert.alert(t('profile.terms'), t('welcome.comingSoon'));
-  };
+  const handlePrivacy = () => navigation.navigate('PrivacyPolicy');
+  const handleTerms = () => navigation.navigate('Terms');
 
   return (
     <SafeAreaView style={styles.safe}>

@@ -78,6 +78,13 @@ export interface AppState {
   cachedRecipes: { [key: string]: Recipe[] };
 }
 
+export type AppStackParamList = {
+  Welcome: undefined;
+  Main: undefined;
+  PrivacyPolicy: undefined;
+  Terms: undefined;
+};
+
 export type RootStackParamList = {
   Onboarding: undefined;
   Ingredients: undefined;

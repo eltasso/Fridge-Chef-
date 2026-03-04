@@ -3,6 +3,7 @@ import {
   View, Text, StyleSheet, TouchableOpacity, SafeAreaView,
   StatusBar, Platform,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation, useLanguage } from '../context/LanguageContext';
 
@@ -10,6 +11,7 @@ export default function WelcomeScreen() {
   const { signInWithAppleFn, signInWithGoogleFn, continueAsGuest } = useAuth();
   const { t } = useTranslation();
   const { language, setLanguage } = useLanguage();
+  const navigation = useNavigation<any>();
 
   const handleApple = () =>
     signInWithAppleFn(t('welcome.comingSoon'), t('welcome.comingSoonMsg'));
@@ -95,6 +97,18 @@ export default function WelcomeScreen() {
         >
           <Text style={styles.guestText}>{t('welcome.continueGuest')}</Text>
         </TouchableOpacity>
+
+        {/* Legal acceptance */}
+        <Text style={styles.acceptText}>
+          {t('legal.acceptPrefix')}
+          <Text style={styles.acceptLink} onPress={() => navigation.navigate('PrivacyPolicy')}>
+            {t('legal.acceptPrivacy')}
+          </Text>
+          {t('legal.acceptMid')}
+          <Text style={styles.acceptLink} onPress={() => navigation.navigate('Terms')}>
+            {t('legal.acceptTerms')}
+          </Text>
+        </Text>
       </View>
     </SafeAreaView>
   );
@@ -272,6 +286,19 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#999',
     fontWeight: '500',
+    textDecorationLine: 'underline',
+    textDecorationColor: '#CCC',
+  },
+
+  acceptText: {
+    fontSize: 12,
+    color: '#BBB',
+    textAlign: 'center',
+    lineHeight: 18,
+    paddingHorizontal: 8,
+  },
+  acceptLink: {
+    color: '#999',
     textDecorationLine: 'underline',
     textDecorationColor: '#CCC',
   },

@@ -10,7 +10,7 @@ import { Text, View, ActivityIndicator, StyleSheet } from 'react-native';
 import { AppProvider, useApp } from './src/context/AppContext';
 import { LanguageProvider, useTranslation } from './src/context/LanguageContext';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
-import { RootStackParamList, TabParamList } from './src/types';
+import { AppStackParamList, RootStackParamList, TabParamList } from './src/types';
 import { colors } from './src/styles/theme';
 
 import WelcomeScreen from './src/screens/WelcomeScreen';
@@ -21,7 +21,10 @@ import RecipeDetailScreen from './src/screens/RecipeDetailScreen';
 import FavoritesScreen from './src/screens/FavoritesScreen';
 import ShoppingListScreen from './src/screens/ShoppingListScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
+import PrivacyPolicyScreen from './src/screens/PrivacyPolicyScreen';
+import TermsScreen from './src/screens/TermsScreen';
 
+const AppStack = createStackNavigator<AppStackParamList>();
 const Stack = createStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<TabParamList>();
 
@@ -133,14 +136,24 @@ function RootNavigator() {
     );
   }
 
-  if (!isAuthenticated) {
-    return <WelcomeScreen />;
-  }
-
   return (
     <NavigationContainer>
       <StatusBar style="dark" />
-      <MainTabs />
+      <AppStack.Navigator screenOptions={{ headerShown: false }}>
+        {isAuthenticated ? (
+          <>
+            <AppStack.Screen name="Main" component={MainTabs} />
+            <AppStack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
+            <AppStack.Screen name="Terms" component={TermsScreen} />
+          </>
+        ) : (
+          <>
+            <AppStack.Screen name="Welcome" component={WelcomeScreen} />
+            <AppStack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
+            <AppStack.Screen name="Terms" component={TermsScreen} />
+          </>
+        )}
+      </AppStack.Navigator>
     </NavigationContainer>
   );
 }

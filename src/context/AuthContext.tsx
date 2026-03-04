@@ -17,6 +17,7 @@ interface AuthContextValue {
   signInWithGoogleFn: (comingSoonTitle: string, comingSoonMsg: string) => Promise<void>;
   continueAsGuest: () => void;
   signOut: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -79,6 +80,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
   }, [persist]);
 
+  const deleteAccount = useCallback(async () => {
+    await firebaseSignOut();
+    persist(null);
+    setUser(null);
+  }, [persist]);
+
   const isAuthenticated = user !== null;
 
   return (
@@ -90,6 +97,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       signInWithGoogleFn,
       continueAsGuest,
       signOut,
+      deleteAccount,
     }}>
       {children}
     </AuthContext.Provider>
