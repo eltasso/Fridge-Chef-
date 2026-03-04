@@ -6,7 +6,12 @@ import {
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import * as KeepAwake from 'expo-keep-awake';
 import { useApp } from '../context/AppContext';
-import { RootStackParamList, ShoppingItem } from '../types';
+import { useTranslation } from '../context/LanguageContext';
+import {
+  RootStackParamList, ShoppingItem,
+  getLocalizedName, getLocalizedDescription,
+  getLocalizedIngredients, getLocalizedSteps,
+} from '../types';
 import { getMissingIngredients, scaleIngredients } from '../utils/filterRecipes';
 import { shareRecipe } from '../utils/share';
 
@@ -17,6 +22,7 @@ export default function RecipeDetailScreen() {
   const navigation = useNavigation();
   const { recipe } = route.params;
   const { state, toggleFavorite, isFavorite, addToShoppingList } = useApp();
+  const { t, language } = useTranslation();
 
   const [servings, setServings] = useState(recipe.servings);
   const [cookMode, setCookMode] = useState(false);
@@ -27,9 +33,14 @@ export default function RecipeDetailScreen() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const favorite = isFavorite(recipe.id);
-  const scaledIngredients = scaleIngredients(recipe.ingredients, recipe.servings, servings);
+  const displayIngredients = getLocalizedIngredients(recipe, language);
+  const displaySteps = getLocalizedSteps(recipe, language);
+  const scaledIngredients = scaleIngredients(displayIngredients, recipe.servings, servings);
   const missing = getMissingIngredients(recipe, state.sessionIngredients);
   const missingNames = new Set(missing.map((m) => m.name.toLowerCase()));
+
+  const localName = getLocalizedName(recipe, language);
+  const localDesc = getLocalizedDescription(recipe, language);
 
   useEffect(() => {
     if (Platform.OS === 'web') return;
@@ -57,7 +68,7 @@ export default function RecipeDetailScreen() {
 
   const handleAddToShopping = () => {
     if (missing.length === 0) {
-      Alert.alert('All good!', 'You have all the ingredients for this recipe.');
+      Alert.alert(t('recipeDetail.allGood'), t('recipeDetail.allGoodMsg'));
       return;
     }
     const items: ShoppingItem[] = missing.map((m) => ({
@@ -66,10 +77,13 @@ export default function RecipeDetailScreen() {
       amount: m.amount,
       checked: false,
       recipeId: recipe.id,
-      recipeName: recipe.name,
+      recipeName: localName,
     }));
     addToShoppingList(items);
-    Alert.alert('Added!', `${missing.length} ingredient${missing.length > 1 ? 's' : ''} added to your shopping list.`);
+    Alert.alert(
+      t('recipeDetail.added'),
+      `${missing.length} ${t('recipeDetail.addedMsg')}`
+    );
   };
 
   const formatTimer = (s: number) => {
@@ -95,15 +109,15 @@ export default function RecipeDetailScreen() {
       <SafeAreaView style={styles.cookSafe}>
         <View style={styles.cookHeader}>
           <TouchableOpacity onPress={() => setCookMode(false)} style={styles.cookClose}>
-            <Text style={styles.cookCloseText}>✕ Exit</Text>
+            <Text style={styles.cookCloseText}>{t('recipeDetail.exit')}</Text>
           </TouchableOpacity>
-          <Text style={styles.cookTitle}>Cook Mode</Text>
-          <Text style={styles.cookProgress}>{currentStep + 1}/{recipe.steps.length}</Text>
+          <Text style={styles.cookTitle}>{t('recipeDetail.cookMode')}</Text>
+          <Text style={styles.cookProgress}>{currentStep + 1}/{displaySteps.length}</Text>
         </View>
 
         <View style={styles.cookBody}>
-          <Text style={styles.cookStepNum}>Step {currentStep + 1}</Text>
-          <Text style={styles.cookStep}>{recipe.steps[currentStep]}</Text>
+          <Text style={styles.cookStepNum}>{t('recipeDetail.step')} {currentStep + 1}</Text>
+          <Text style={styles.cookStep}>{displaySteps[currentStep]}</Text>
         </View>
 
         <View style={styles.timerRow}>
@@ -128,19 +142,19 @@ export default function RecipeDetailScreen() {
             disabled={currentStep === 0}
             style={[styles.cookNavBtn, currentStep === 0 && styles.navDisabled]}
           >
-            <Text style={styles.cookNavText}>← Prev</Text>
+            <Text style={styles.cookNavText}>{t('recipeDetail.prev')}</Text>
           </TouchableOpacity>
 
-          {currentStep < recipe.steps.length - 1 ? (
+          {currentStep < displaySteps.length - 1 ? (
             <TouchableOpacity
               onPress={() => { setCurrentStep((s) => s + 1); setTimer(0); setTimerRunning(false); }}
               style={styles.cookNavBtnPrimary}
             >
-              <Text style={styles.cookNavTextPrimary}>Next →</Text>
+              <Text style={styles.cookNavTextPrimary}>{t('recipeDetail.next')}</Text>
             </TouchableOpacity>
           ) : (
             <TouchableOpacity onPress={() => setCookMode(false)} style={styles.cookNavBtnPrimary}>
-              <Text style={styles.cookNavTextPrimary}>Done! 🎉</Text>
+              <Text style={styles.cookNavTextPrimary}>{t('recipeDetail.done')}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -176,16 +190,16 @@ export default function RecipeDetailScreen() {
         <View style={styles.contentCard}>
           {recipe.isAIGenerated && (
             <View style={styles.aiTag}>
-              <Text style={styles.aiTagText}>✨ AI Generated</Text>
+              <Text style={styles.aiTagText}>{t('recipeDetail.aiGenerated')}</Text>
             </View>
           )}
 
-          <Text style={styles.recipeName}>{recipe.name}</Text>
+          <Text style={styles.recipeName}>{localName}</Text>
 
           {/* Stars */}
           <View style={styles.starsRow}>
             <Text style={styles.stars}>⭐⭐⭐⭐</Text>
-            <Text style={styles.starsCount}>(128 reviews)</Text>
+            <Text style={styles.starsCount}>(128 {t('recipeDetail.reviews')})</Text>
           </View>
 
           {/* Info pills */}
@@ -196,16 +210,16 @@ export default function RecipeDetailScreen() {
               </Text>
             </View>
             <View style={styles.pill}>
-              <Text style={styles.pillText}>⏱ {totalTime} min</Text>
+              <Text style={styles.pillText}>⏱ {totalTime} {t('common.min')}</Text>
             </View>
             <View style={styles.pill}>
-              <Text style={styles.pillText}>👥 {servings} serv</Text>
+              <Text style={styles.pillText}>👥 {servings} {t('recipeDetail.serv')}</Text>
             </View>
           </View>
 
           {/* Serving adjuster */}
           <View style={styles.servingsRow}>
-            <Text style={styles.servingsLabel}>👥 Servings</Text>
+            <Text style={styles.servingsLabel}>{t('recipeDetail.servings')}</Text>
             <View style={styles.stepper}>
               <TouchableOpacity
                 onPress={() => setServings((s) => Math.max(1, s - 1))}
@@ -225,11 +239,13 @@ export default function RecipeDetailScreen() {
 
           {/* Ingredients */}
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Ingredients</Text>
-            <Text style={styles.sectionCount}>{scaledIngredients.length} items</Text>
+            <Text style={styles.sectionTitle}>{t('recipeDetail.ingredients')}</Text>
+            <Text style={styles.sectionCount}>{scaledIngredients.length} {t('recipeDetail.items')}</Text>
           </View>
           {scaledIngredients.map((ing, i) => {
-            const isMissing = missingNames.has(ing.name.toLowerCase());
+            // Check missing against English canonical names
+            const canonicalEn = recipe.ingredients[i]?.name.toLowerCase() ?? ing.name.toLowerCase();
+            const isMissing = missingNames.has(canonicalEn);
             const isChecked = checkedIngredients.has(i);
             return (
               <TouchableOpacity
@@ -247,14 +263,16 @@ export default function RecipeDetailScreen() {
                   </Text>
                   <Text style={styles.ingAmount}>{ing.amount}</Text>
                 </View>
-                {isMissing && <Text style={styles.missingTag}>Missing</Text>}
+                {isMissing && <Text style={styles.missingTag}>{t('recipeDetail.missing')}</Text>}
               </TouchableOpacity>
             );
           })}
 
           {/* Steps */}
-          <Text style={[styles.sectionTitle, { marginTop: 24, marginBottom: 16 }]}>Steps</Text>
-          {recipe.steps.map((step, i) => (
+          <Text style={[styles.sectionTitle, { marginTop: 24, marginBottom: 16 }]}>
+            {t('recipeDetail.steps')}
+          </Text>
+          {displaySteps.map((step, i) => (
             <View key={i} style={styles.stepRow}>
               <Text style={styles.stepNum}>{i + 1}</Text>
               <Text style={styles.stepText}>{step}</Text>
@@ -270,14 +288,14 @@ export default function RecipeDetailScreen() {
           style={styles.addMissingBtn}
           activeOpacity={0.8}
         >
-          <Text style={styles.addMissingText}>🛒 Add Missing</Text>
+          <Text style={styles.addMissingText}>{t('recipeDetail.addMissing')}</Text>
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => setCookMode(true)}
           style={styles.cookBtn}
           activeOpacity={0.85}
         >
-          <Text style={styles.cookBtnText}>Start Cooking</Text>
+          <Text style={styles.cookBtnText}>{t('recipeDetail.startCooking')}</Text>
         </TouchableOpacity>
       </View>
     </View>

@@ -5,7 +5,8 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useApp } from '../context/AppContext';
-import { Recipe } from '../types';
+import { useTranslation } from '../context/LanguageContext';
+import { Recipe, getLocalizedName } from '../types';
 
 const { width } = Dimensions.get('window');
 const CARD_SIZE = (width - 48 - 12) / 2;
@@ -14,12 +15,15 @@ function FavCard({
   recipe,
   onPress,
   onUnfavorite,
+  language,
 }: {
   recipe: Recipe;
   onPress: () => void;
   onUnfavorite: () => void;
+  language: string;
 }) {
   const totalTime = recipe.prepTime + recipe.cookTime;
+  const localName = getLocalizedName(recipe, language);
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.85}>
       <View style={styles.cardImage}>
@@ -29,7 +33,7 @@ function FavCard({
         </TouchableOpacity>
       </View>
       <View style={styles.cardInfo}>
-        <Text style={styles.cardName} numberOfLines={2}>{recipe.name}</Text>
+        <Text style={styles.cardName} numberOfLines={2}>{localName}</Text>
         <Text style={styles.cardMeta}>{totalTime} min • {recipe.difficulty}</Text>
       </View>
     </TouchableOpacity>
@@ -39,28 +43,32 @@ function FavCard({
 export default function FavoritesScreen() {
   const navigation = useNavigation<any>();
   const { state, toggleFavorite } = useApp();
+  const { t, language } = useTranslation();
 
   if (state.favorites.length === 0) {
     return (
       <SafeAreaView style={styles.safe}>
         <View style={styles.header}>
-          <Text style={styles.title}>My Favorites <Text style={styles.titleHeart}>♥</Text></Text>
+          <Text style={styles.title}>{t('favorites.title')} <Text style={styles.titleHeart}>♥</Text></Text>
         </View>
         <View style={styles.empty}>
           <Text style={styles.emptyEmoji}>💔</Text>
-          <Text style={styles.emptyTitle}>No favorites yet</Text>
-          <Text style={styles.emptySubtitle}>Save recipes you love and they'll appear here</Text>
+          <Text style={styles.emptyTitle}>{t('favorites.noFavs')}</Text>
+          <Text style={styles.emptySubtitle}>{t('favorites.noFavsSubtitle')}</Text>
           <TouchableOpacity
             style={styles.emptyBtn}
             onPress={() => navigation.navigate('HomeStack', { screen: 'Onboarding' })}
             activeOpacity={0.85}
           >
-            <Text style={styles.emptyBtnText}>Browse Recipes</Text>
+            <Text style={styles.emptyBtnText}>{t('favorites.explore')}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
   }
+
+  const count = state.favorites.length;
+  const savedLabel = count === 1 ? t('favorites.savedSingular') : t('favorites.savedPlural');
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -72,13 +80,14 @@ export default function FavoritesScreen() {
         columnWrapperStyle={styles.row}
         ListHeaderComponent={
           <View style={styles.header}>
-            <Text style={styles.title}>My Favorites <Text style={styles.titleHeart}>♥</Text></Text>
-            <Text style={styles.subtitle}>{state.favorites.length} saved recipe{state.favorites.length !== 1 ? 's' : ''}</Text>
+            <Text style={styles.title}>{t('favorites.title')} <Text style={styles.titleHeart}>♥</Text></Text>
+            <Text style={styles.subtitle}>{count} {savedLabel}</Text>
           </View>
         }
         renderItem={({ item }) => (
           <FavCard
             recipe={item}
+            language={language}
             onPress={() => navigation.navigate('HomeStack', { screen: 'RecipeDetail', params: { recipe: item } })}
             onUnfavorite={() => toggleFavorite(item)}
           />

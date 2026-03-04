@@ -6,7 +6,8 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useApp } from '../context/AppContext';
-import { Recipe, RootStackParamList } from '../types';
+import { useTranslation } from '../context/LanguageContext';
+import { Recipe, RootStackParamList, getLocalizedName, getLocalizedDescription } from '../types';
 import { LOCAL_RECIPES } from '../data/recipes';
 import { generateRecipes } from '../services/openai';
 import { filterRecipes } from '../utils/filterRecipes';
@@ -20,11 +21,13 @@ function RecipeRow({
   onPress,
   onFavorite,
   isFavorite,
+  language,
 }: {
   recipe: Recipe;
   onPress: () => void;
   onFavorite: () => void;
   isFavorite: boolean;
+  language: string;
 }) {
   const totalTime = recipe.prepTime + recipe.cookTime;
 
@@ -35,13 +38,16 @@ function RecipeRow({
       ? { bg: '#FFF3E0', text: '#FF9800' }
       : { bg: '#FCE4EC', text: '#E91E63' };
 
+  const localName = getLocalizedName(recipe, language);
+  const localDesc = getLocalizedDescription(recipe, language);
+
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.85}>
       <View style={styles.cardImagePlaceholder}>
         <Text style={styles.cardImageEmoji}>🍽️</Text>
       </View>
       <View style={styles.cardContent}>
-        <Text style={styles.cardName} numberOfLines={2}>{recipe.name}</Text>
+        <Text style={styles.cardName} numberOfLines={2}>{localName}</Text>
         <View style={styles.cardMeta}>
           <View style={[styles.diffBadge, { backgroundColor: difficultyColor.bg }]}>
             <Text style={[styles.diffBadgeText, { color: difficultyColor.text }]}>
@@ -53,7 +59,7 @@ function RecipeRow({
             <Text style={styles.aiBadge}>✨ AI</Text>
           )}
         </View>
-        <Text style={styles.cardDesc} numberOfLines={1}>{recipe.description}</Text>
+        <Text style={styles.cardDesc} numberOfLines={1}>{localDesc}</Text>
       </View>
       <TouchableOpacity onPress={onFavorite} style={styles.heartBtn}>
         <Text style={[styles.heartIcon, isFavorite && styles.heartIconActive]}>
@@ -67,6 +73,7 @@ function RecipeRow({
 export default function RecipeListScreen() {
   const navigation = useNavigation<Nav>();
   const { state, toggleFavorite, isFavorite, setCachedRecipes, getCacheKey } = useApp();
+  const { t, language } = useTranslation();
   const [aiRecipes, setAiRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
@@ -116,16 +123,16 @@ export default function RecipeListScreen() {
       setActiveTab('ai');
     } catch (error: any) {
       Alert.alert(
-        'AI Generation Failed',
+        t('recipeList.aiGeneratedFailed'),
         error.message === 'OpenAI API key not configured'
-          ? 'Add your OpenAI API key to the .env file to enable AI recipe generation.'
-          : 'Could not generate recipes. Please check your internet connection.',
-        [{ text: 'OK' }]
+          ? t('recipeList.apiKeyError')
+          : t('recipeList.aiError'),
+        [{ text: t('common.ok') }]
       );
     } finally {
       setLoading(false);
     }
-  }, [state, cacheKey, cached, aiRecipes]);
+  }, [state, cacheKey, cached, aiRecipes, t]);
 
   const handleRegenerate = useCallback(async () => {
     if (!state.mealTime || !state.preference) return;
@@ -142,20 +149,22 @@ export default function RecipeListScreen() {
       setAiRecipes(recipes);
       setCachedRecipes(cacheKey, recipes);
     } catch {
-      Alert.alert('Error', 'Could not regenerate recipes.');
+      Alert.alert(t('common.error'), t('recipeList.regenError'));
     } finally {
       setLoading(false);
     }
-  }, [state, cacheKey]);
+  }, [state, cacheKey, t]);
 
   const ingredientSummary = state.sessionIngredients.slice(0, 4).join(', ') +
-    (state.sessionIngredients.length > 4 ? ` +${state.sessionIngredients.length - 4} more` : '');
+    (state.sessionIngredients.length > 4
+      ? ` +${state.sessionIngredients.length - 4} ${t('recipeList.more')}`
+      : '');
 
   const TABS: { key: FilterTab; label: string }[] = [
-    { key: 'all', label: 'All' },
-    { key: 'quick', label: 'Quick (<15min)' },
-    { key: 'easy', label: 'Easy' },
-    { key: 'ai', label: '✨ AI Generated' },
+    { key: 'all', label: t('recipeList.tabAll') },
+    { key: 'quick', label: t('recipeList.tabQuick') },
+    { key: 'easy', label: t('recipeList.tabEasy') },
+    { key: 'ai', label: t('recipeList.tabAI') },
   ];
 
   const renderHeader = () => (
@@ -164,9 +173,9 @@ export default function RecipeListScreen() {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Text style={styles.backText}>←</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>Recipes for You</Text>
+        <Text style={styles.title}>{t('recipeList.title')}</Text>
         {state.sessionIngredients.length > 0 && (
-          <Text style={styles.subtitle}>Based on: {ingredientSummary}</Text>
+          <Text style={styles.subtitle}>{t('recipeList.basedOn')} {ingredientSummary}</Text>
         )}
       </View>
 
@@ -186,7 +195,7 @@ export default function RecipeListScreen() {
 
       {filteredByTab.length === 0 && !loading && (
         <View style={styles.emptyCard}>
-          <Text style={styles.emptyText}>No recipes match your filters.</Text>
+          <Text style={styles.emptyText}>{t('recipeList.noMatch')}</Text>
         </View>
       )}
     </View>
@@ -204,7 +213,7 @@ export default function RecipeListScreen() {
           {loading ? (
             <ActivityIndicator color="#4ECDC4" size="small" />
           ) : (
-            <Text style={styles.regenText}>↻ Regenerate AI Recipes</Text>
+            <Text style={styles.regenText}>{t('recipeList.regenerate')}</Text>
           )}
         </TouchableOpacity>
       )}
@@ -217,10 +226,10 @@ export default function RecipeListScreen() {
         {loading ? (
           <ActivityIndicator color="#fff" size="small" />
         ) : (
-          <Text style={styles.aiBtnText}>✨ Generate AI Recipes</Text>
+          <Text style={styles.aiBtnText}>{t('recipeList.generate')}</Text>
         )}
       </TouchableOpacity>
-      <Text style={styles.aiHint}>Powered by AI — uses your ingredients to create new recipes</Text>
+      <Text style={styles.aiHint}>{t('recipeList.hint')}</Text>
     </View>
   );
 
@@ -235,6 +244,7 @@ export default function RecipeListScreen() {
         renderItem={({ item }) => (
           <RecipeRow
             recipe={item}
+            language={language}
             onPress={() => navigation.navigate('RecipeDetail', { recipe: item })}
             onFavorite={() => toggleFavorite(item)}
             isFavorite={isFavorite(item.id)}

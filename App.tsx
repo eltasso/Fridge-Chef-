@@ -8,6 +8,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Text, View } from 'react-native';
 
 import { AppProvider, useApp } from './src/context/AppContext';
+import { LanguageProvider, useTranslation } from './src/context/LanguageContext';
 import { RootStackParamList, TabParamList } from './src/types';
 import { colors } from './src/styles/theme';
 
@@ -65,6 +66,7 @@ function FavoritesBadge() {
 }
 
 function MainTabs() {
+  const { t } = useTranslation();
   return (
     <Tab.Navigator
       screenOptions={{
@@ -85,7 +87,7 @@ function MainTabs() {
         name="HomeStack"
         component={HomeStack}
         options={{
-          tabBarLabel: 'Home',
+          tabBarLabel: t('tab.home'),
           tabBarIcon: ({ color }) => <Text style={{ fontSize: 22, color }}>🏠</Text>,
         }}
       />
@@ -93,7 +95,7 @@ function MainTabs() {
         name="Favorites"
         component={FavoritesScreen}
         options={{
-          tabBarLabel: 'Favorites',
+          tabBarLabel: t('tab.favorites'),
           tabBarIcon: ({ color, focused }) => (
             <View>
               <Text style={{ fontSize: 22, color }}>{focused ? '♥' : '♡'}</Text>
@@ -106,7 +108,7 @@ function MainTabs() {
         name="ShoppingList"
         component={ShoppingListScreen}
         options={{
-          tabBarLabel: 'Shopping',
+          tabBarLabel: t('tab.shopping'),
           tabBarIcon: ({ color }) => (
             <View>
               <Text style={{ fontSize: 22, color }}>🛒</Text>
@@ -123,12 +125,14 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <AppProvider>
-          <NavigationContainer>
-            <StatusBar style="dark" />
-            <MainTabs />
-          </NavigationContainer>
-        </AppProvider>
+        <LanguageProvider>
+          <AppProvider>
+            <NavigationContainer>
+              <StatusBar style="dark" />
+              <MainTabs />
+            </NavigationContainer>
+          </AppProvider>
+        </LanguageProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

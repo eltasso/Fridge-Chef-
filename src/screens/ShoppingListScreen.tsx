@@ -4,27 +4,29 @@ import {
   TouchableOpacity, Alert,
 } from 'react-native';
 import { useApp } from '../context/AppContext';
+import { useTranslation } from '../context/LanguageContext';
 import { ShoppingItem } from '../types';
 import { shareShoppingList } from '../utils/share';
 
 export default function ShoppingListScreen() {
   const { state, toggleShoppingItem, removeShoppingItem, clearShoppingList } = useApp();
+  const { t } = useTranslation();
 
   const unchecked = state.shoppingList.filter((i) => !i.checked);
   const checked = state.shoppingList.filter((i) => i.checked);
 
   const handleClear = () => {
     if (state.shoppingList.length === 0) return;
-    Alert.alert('Clear List', 'Remove all items from the shopping list?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Clear', style: 'destructive', onPress: clearShoppingList },
+    Alert.alert(t('shopping.clearTitle'), t('shopping.clearMsg'), [
+      { text: t('shopping.cancel'), style: 'cancel' },
+      { text: t('shopping.clear'), style: 'destructive', onPress: clearShoppingList },
     ]);
   };
 
   const handleShare = async () => {
     const items = state.shoppingList.filter((i) => !i.checked);
     if (items.length === 0) {
-      Alert.alert('Nothing to share', 'Add some items to your list first.');
+      Alert.alert(t('shopping.nothingToShare'), t('shopping.addFirst'));
       return;
     }
     await shareShoppingList(items.map((i) => ({ name: i.name, amount: i.amount })));
@@ -34,10 +36,14 @@ export default function ShoppingListScreen() {
     <TouchableOpacity
       onPress={() => toggleShoppingItem(item.id)}
       onLongPress={() => {
-        Alert.alert('Remove Item', `Remove "${item.name}" from the list?`, [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Remove', style: 'destructive', onPress: () => removeShoppingItem(item.id) },
-        ]);
+        Alert.alert(
+          t('shopping.remove'),
+          t('shopping.removeMsg', { name: item.name }),
+          [
+            { text: t('shopping.cancel'), style: 'cancel' },
+            { text: t('common.delete'), style: 'destructive', onPress: () => removeShoppingItem(item.id) },
+          ]
+        );
       }}
       activeOpacity={0.8}
       style={styles.itemCard}
@@ -50,7 +56,7 @@ export default function ShoppingListScreen() {
           {item.amount ? `${item.amount} ` : ''}{item.name}
         </Text>
         {item.recipeName && (
-          <Text style={styles.itemRecipe}>From: {item.recipeName}</Text>
+          <Text style={styles.itemRecipe}>{t('shopping.from')} {item.recipeName}</Text>
         )}
       </View>
     </TouchableOpacity>
@@ -60,16 +66,20 @@ export default function ShoppingListScreen() {
     return (
       <SafeAreaView style={styles.safe}>
         <View style={styles.header}>
-          <Text style={styles.title}>Shopping List 🛒</Text>
+          <Text style={styles.title}>{t('shopping.title')}</Text>
         </View>
         <View style={styles.empty}>
           <Text style={styles.emptyEmoji}>🛒</Text>
-          <Text style={styles.emptyTitle}>Your list is empty</Text>
-          <Text style={styles.emptySubtitle}>Add missing ingredients from any recipe</Text>
+          <Text style={styles.emptyTitle}>{t('shopping.empty')}</Text>
+          <Text style={styles.emptySubtitle}>{t('shopping.emptySubtitle')}</Text>
         </View>
       </SafeAreaView>
     );
   }
+
+  const remainingLabel = unchecked.length === 1
+    ? `${unchecked.length} ${t('shopping.remainingSingular')}`
+    : `${unchecked.length} ${t('shopping.remainingPlural')}`;
 
   type ListRow =
     | { type: 'item'; key: string; item: ShoppingItem }
@@ -82,7 +92,7 @@ export default function ShoppingListScreen() {
       ? [{ type: 'divider' as const, key: 'div' }]
       : []),
     ...(checked.length > 0
-      ? [{ type: 'section' as const, key: 'done-header', label: `Done (${checked.length})` }]
+      ? [{ type: 'section' as const, key: 'done-header', label: `${t('shopping.done')} (${checked.length})` }]
       : []),
     ...checked.map((i): ListRow => ({ type: 'item', key: i.id, item: i })),
   ];
@@ -95,10 +105,8 @@ export default function ShoppingListScreen() {
         contentContainerStyle={styles.list}
         ListHeaderComponent={
           <View style={styles.header}>
-            <Text style={styles.title}>Shopping List 🛒</Text>
-            <Text style={styles.subtitle}>
-              {unchecked.length} item{unchecked.length !== 1 ? 's' : ''} remaining
-            </Text>
+            <Text style={styles.title}>{t('shopping.title')}</Text>
+            <Text style={styles.subtitle}>{remainingLabel}</Text>
           </View>
         }
         renderItem={({ item }) => {
@@ -116,10 +124,10 @@ export default function ShoppingListScreen() {
       {/* Bottom Bar */}
       <View style={styles.bottomBar}>
         <TouchableOpacity onPress={handleShare} style={styles.shareBtn} activeOpacity={0.8}>
-          <Text style={styles.shareBtnText}>📤 Share List</Text>
+          <Text style={styles.shareBtnText}>{t('shopping.share')}</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={handleClear} activeOpacity={0.8}>
-          <Text style={styles.clearText}>Clear All</Text>
+          <Text style={styles.clearText}>{t('shopping.clearAll')}</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

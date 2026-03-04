@@ -6,40 +6,69 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useApp } from '../context/AppContext';
+import { useTranslation } from '../context/LanguageContext';
 import { Difficulty, DietaryTag, RootStackParamList } from '../types';
 import { scanIngredients } from '../services/openai';
 
 type Nav = StackNavigationProp<RootStackParamList, 'Ingredients'>;
 
-const SUGGESTIONS = ['Eggs', 'Milk', 'Butter', 'Cheese', 'Bread', 'Pasta', 'Rice', 'Onion', 'Garlic', 'Tomato'];
-
-const DIFFICULTIES: { value: Difficulty; label: string }[] = [
-  { value: 'easy', label: 'Easy' },
-  { value: 'medium', label: 'Medium' },
-  { value: 'hard', label: 'Hard' },
+// Spanish suggestions mapping: display → internal value (used for matching)
+const SUGGESTIONS_ES = [
+  { display: 'Huevos', value: 'huevos' },
+  { display: 'Leche', value: 'leche' },
+  { display: 'Mantequilla', value: 'mantequilla' },
+  { display: 'Queso', value: 'queso' },
+  { display: 'Pan', value: 'pan' },
+  { display: 'Pasta', value: 'pasta' },
+  { display: 'Arroz', value: 'arroz' },
+  { display: 'Cebolla', value: 'cebolla' },
+  { display: 'Ajo', value: 'ajo' },
+  { display: 'Tomate', value: 'tomate' },
 ];
 
-const TIME_OPTIONS: { value: number; label: string }[] = [
-  { value: 15, label: '<15 min' },
-  { value: 30, label: '<30 min' },
-  { value: 45, label: '<45 min' },
-  { value: 60, label: '<60 min' },
-];
-
-const DIETARY_OPTIONS: { value: DietaryTag; label: string }[] = [
-  { value: 'vegetarian', label: 'Vegetarian' },
-  { value: 'vegan', label: 'Vegan' },
-  { value: 'gluten-free', label: 'Gluten-Free' },
-  { value: 'dairy-free', label: 'Dairy-Free' },
+const SUGGESTIONS_EN = [
+  { display: 'Eggs', value: 'eggs' },
+  { display: 'Milk', value: 'milk' },
+  { display: 'Butter', value: 'butter' },
+  { display: 'Cheese', value: 'cheese' },
+  { display: 'Bread', value: 'bread' },
+  { display: 'Pasta', value: 'pasta' },
+  { display: 'Rice', value: 'rice' },
+  { display: 'Onion', value: 'onion' },
+  { display: 'Garlic', value: 'garlic' },
+  { display: 'Tomato', value: 'tomato' },
 ];
 
 export default function IngredientsScreen() {
   const navigation = useNavigation<Nav>();
   const { state, addIngredient, removeIngredient, setFilters } = useApp();
+  const { t, language } = useTranslation();
   const [inputValue, setInputValue] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [scanning, setScanning] = useState(false);
   const inputRef = useRef<TextInput>(null);
+
+  const SUGGESTIONS = language === 'es' ? SUGGESTIONS_ES : SUGGESTIONS_EN;
+
+  const DIFFICULTIES: { value: Difficulty; label: string }[] = [
+    { value: 'easy', label: t('filters.easy') },
+    { value: 'medium', label: t('filters.medium') },
+    { value: 'hard', label: t('filters.hard') },
+  ];
+
+  const TIME_OPTIONS: { value: number; label: string }[] = [
+    { value: 15, label: `<15 ${t('common.min')}` },
+    { value: 30, label: `<30 ${t('common.min')}` },
+    { value: 45, label: `<45 ${t('common.min')}` },
+    { value: 60, label: `<60 ${t('common.min')}` },
+  ];
+
+  const DIETARY_OPTIONS: { value: DietaryTag; label: string }[] = [
+    { value: 'vegetarian', label: t('filters.vegetarian') },
+    { value: 'vegan', label: t('filters.vegan') },
+    { value: 'gluten-free', label: t('filters.glutenFree') },
+    { value: 'dairy-free', label: t('filters.dairyFree') },
+  ];
 
   const handleAdd = () => {
     const trimmed = inputValue.trim();
@@ -51,7 +80,7 @@ export default function IngredientsScreen() {
 
   const handleScan = async () => {
     if (Platform.OS === 'web') {
-      Alert.alert('Camera Scan', 'Camera scan is available on mobile only.');
+      Alert.alert(t('ingredients.scan'), t('camera.mobileOnly'));
       return;
     }
 
@@ -59,7 +88,7 @@ export default function IngredientsScreen() {
       const ImagePicker = require('expo-image-picker');
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission Required', 'Camera permission is needed to scan ingredients.');
+        Alert.alert(t('camera.permissionRequired'), t('camera.permissionMsg'));
         return;
       }
 
@@ -74,12 +103,12 @@ export default function IngredientsScreen() {
       const found = await scanIngredients(result.assets[0].base64);
       if (found.length > 0) {
         found.forEach((ing) => addIngredient(ing));
-        Alert.alert('Ingredients Found!', `Added: ${found.join(', ')}`);
+        Alert.alert(t('camera.found'), `${t('camera.foundMsg')} ${found.join(', ')}`);
       } else {
-        Alert.alert('No Ingredients Found', 'Could not identify ingredients. Try a clearer photo.');
+        Alert.alert(t('camera.notFound'), t('camera.notFoundMsg'));
       }
     } catch {
-      Alert.alert('Error', 'Failed to scan ingredients.');
+      Alert.alert(t('common.error'), t('camera.error'));
     } finally {
       setScanning(false);
     }
@@ -127,7 +156,7 @@ export default function IngredientsScreen() {
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.title}>What's in your fridge?</Text>
+        <Text style={styles.title}>{t('ingredients.title')}</Text>
 
         {/* Scan / Manual cards */}
         <View style={styles.optionRow}>
@@ -142,7 +171,9 @@ export default function IngredientsScreen() {
             ) : (
               <Text style={styles.scanEmoji}>📷</Text>
             )}
-            <Text style={styles.scanLabel}>{scanning ? 'Scanning…' : 'Scan Ingredients'}</Text>
+            <Text style={styles.scanLabel}>
+              {scanning ? t('ingredients.scanning') : t('ingredients.scan')}
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.manualCard}
@@ -150,7 +181,7 @@ export default function IngredientsScreen() {
             activeOpacity={0.8}
           >
             <Text style={styles.manualEmoji}>✏️</Text>
-            <Text style={styles.manualLabel}>Type Manually</Text>
+            <Text style={styles.manualLabel}>{t('ingredients.typeManually')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -162,7 +193,7 @@ export default function IngredientsScreen() {
             style={styles.input}
             value={inputValue}
             onChangeText={setInputValue}
-            placeholder="Type an ingredient..."
+            placeholder={t('ingredients.placeholder')}
             placeholderTextColor="#999"
             onSubmitEditing={handleAdd}
             returnKeyType="done"
@@ -187,16 +218,18 @@ export default function IngredientsScreen() {
         )}
 
         {/* Suggestions */}
-        <Text style={styles.suggestionsLabel}>SUGGESTIONS</Text>
+        <Text style={styles.suggestionsLabel}>{t('ingredients.suggestions')}</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.suggestionsRow}>
-          {SUGGESTIONS.filter((s) => !state.sessionIngredients.includes(s.toLowerCase()) && !state.sessionIngredients.map(i => i.toLowerCase()).includes(s.toLowerCase())).map((s) => (
+          {SUGGESTIONS.filter(
+            (s) => !state.sessionIngredients.includes(s.value)
+          ).map((s) => (
             <TouchableOpacity
-              key={s}
+              key={s.value}
               style={styles.suggestionChip}
-              onPress={() => addIngredient(s.toLowerCase())}
+              onPress={() => addIngredient(s.value)}
               activeOpacity={0.8}
             >
-              <Text style={styles.suggestionChipText}>{s}</Text>
+              <Text style={styles.suggestionChipText}>{s.display}</Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
@@ -204,7 +237,7 @@ export default function IngredientsScreen() {
         {/* Previously used */}
         {state.pantryIngredients.filter((p) => !state.sessionIngredients.includes(p)).length > 0 && (
           <View style={styles.pantrySection}>
-            <Text style={styles.suggestionsLabel}>PREVIOUSLY USED</Text>
+            <Text style={styles.suggestionsLabel}>{t('ingredients.previouslyUsed')}</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               {state.pantryIngredients
                 .filter((p) => !state.sessionIngredients.includes(p))
@@ -230,7 +263,7 @@ export default function IngredientsScreen() {
           activeOpacity={0.85}
           style={styles.cta}
         >
-          <Text style={styles.ctaText}>Search Recipes →</Text>
+          <Text style={styles.ctaText}>{t('ingredients.cta')}</Text>
         </TouchableOpacity>
       </View>
 
@@ -239,9 +272,9 @@ export default function IngredientsScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalSheet}>
             <View style={styles.modalHandle} />
-            <Text style={styles.modalTitle}>Filters</Text>
+            <Text style={styles.modalTitle}>{t('filters.title')}</Text>
 
-            <Text style={styles.filterSectionLabel}>Difficulty</Text>
+            <Text style={styles.filterSectionLabel}>{t('filters.difficulty')}</Text>
             <View style={styles.filterRow}>
               {DIFFICULTIES.map((d) => {
                 const sel = state.filters.difficulty === d.value;
@@ -259,25 +292,25 @@ export default function IngredientsScreen() {
               })}
             </View>
 
-            <Text style={styles.filterSectionLabel}>Max Time</Text>
+            <Text style={styles.filterSectionLabel}>{t('filters.maxTime')}</Text>
             <View style={styles.filterRow}>
-              {TIME_OPTIONS.map((t) => {
-                const sel = state.filters.maxTime === t.value;
+              {TIME_OPTIONS.map((opt) => {
+                const sel = state.filters.maxTime === opt.value;
                 return (
                   <TouchableOpacity
-                    key={t.value}
+                    key={opt.value}
                     style={[styles.filterPill, sel && styles.filterPillSelected]}
-                    onPress={() => toggleTime(t.value)}
+                    onPress={() => toggleTime(opt.value)}
                   >
                     <Text style={[styles.filterPillText, sel && styles.filterPillTextSelected]}>
-                      {t.label}
+                      {opt.label}
                     </Text>
                   </TouchableOpacity>
                 );
               })}
             </View>
 
-            <Text style={styles.filterSectionLabel}>Dietary</Text>
+            <Text style={styles.filterSectionLabel}>{t('filters.dietary')}</Text>
             <View style={styles.filterRow}>
               {DIETARY_OPTIONS.map((d) => {
                 const sel = state.filters.dietary.includes(d.value);
@@ -296,7 +329,7 @@ export default function IngredientsScreen() {
             </View>
 
             <TouchableOpacity style={styles.modalDone} onPress={() => setShowFilters(false)}>
-              <Text style={styles.modalDoneText}>Done</Text>
+              <Text style={styles.modalDoneText}>{t('filters.done')}</Text>
             </TouchableOpacity>
           </View>
         </View>

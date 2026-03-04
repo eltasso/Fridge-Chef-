@@ -34,9 +34,11 @@ export function filterRecipes(
 
 function matchScore(recipe: Recipe, ingredients: string[]): number {
   if (ingredients.length === 0) return 1;
-  const recipeIngredientNames = recipe.ingredients.map((i) => i.name.toLowerCase());
+  const enNames = recipe.ingredients.map((i) => i.name.toLowerCase());
+  const esNames = (recipe.ingredients_es ?? []).map((i) => i.name.toLowerCase());
+  const allNames = [...new Set([...enNames, ...esNames])];
   const matches = ingredients.filter((ing) =>
-    recipeIngredientNames.some((ri) => ri.includes(ing) || ing.includes(ri))
+    allNames.some((ri) => ri.includes(ing) || ing.includes(ri))
   );
   return matches.length / recipe.ingredients.length;
 }
@@ -46,9 +48,13 @@ export function getMissingIngredients(
   availableIngredients: string[]
 ): { name: string; amount: string }[] {
   const normalized = availableIngredients.map((i) => i.toLowerCase().trim());
-  return recipe.ingredients.filter((ing) => {
-    const ingName = ing.name.toLowerCase();
-    return !normalized.some((a) => a.includes(ingName) || ingName.includes(a));
+  return recipe.ingredients.filter((ing, idx) => {
+    const ingNameEn = ing.name.toLowerCase();
+    const ingNameEs = (recipe.ingredients_es?.[idx]?.name ?? '').toLowerCase();
+    return !normalized.some((a) =>
+      a.includes(ingNameEn) || ingNameEn.includes(a) ||
+      (ingNameEs && (a.includes(ingNameEs) || ingNameEs.includes(a)))
+    );
   });
 }
 

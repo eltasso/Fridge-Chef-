@@ -5,25 +5,27 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useApp } from '../context/AppContext';
+import { useTranslation } from '../context/LanguageContext';
 import { MealTime, Preference, RootStackParamList } from '../types';
 
 type Nav = StackNavigationProp<RootStackParamList, 'Onboarding'>;
 
-const MEAL_TIMES: { value: MealTime; label: string; emoji: string }[] = [
-  { value: 'breakfast', label: 'Breakfast', emoji: '🌅' },
-  { value: 'lunch', label: 'Lunch', emoji: '☀️' },
-  { value: 'snack', label: 'Snack', emoji: '🍪' },
-  { value: 'dinner', label: 'Dinner', emoji: '🌙' },
-];
-
-const PREFERENCES: { value: Preference; label: string }[] = [
-  { value: 'sweet', label: 'Sweet' },
-  { value: 'savory', label: 'Savory' },
-];
-
 export default function OnboardingScreen() {
   const navigation = useNavigation<Nav>();
   const { state, setMealTime, setPreference } = useApp();
+  const { t } = useTranslation();
+
+  const MEAL_TIMES: { value: MealTime; label: string; emoji: string }[] = [
+    { value: 'breakfast', label: t('onboarding.breakfast'), emoji: '🌅' },
+    { value: 'lunch', label: t('onboarding.lunch'), emoji: '☀️' },
+    { value: 'snack', label: t('onboarding.snack'), emoji: '🍪' },
+    { value: 'dinner', label: t('onboarding.dinner'), emoji: '🌙' },
+  ];
+
+  const PREFERENCES: { value: Preference; label: string }[] = [
+    { value: 'sweet', label: t('onboarding.sweet') },
+    { value: 'savory', label: t('onboarding.savory') },
+  ];
 
   const canContinue = state.mealTime !== null && state.preference !== null;
 
@@ -32,8 +34,8 @@ export default function OnboardingScreen() {
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.hero}>
           <Text style={styles.heroEmoji}>👨‍🍳</Text>
-          <Text style={styles.heroTitle}>What are you craving?</Text>
-          <Text style={styles.heroSubtitle}>Select your meal time</Text>
+          <Text style={styles.heroTitle}>{t('onboarding.title')}</Text>
+          <Text style={styles.heroSubtitle}>{t('onboarding.subtitle')}</Text>
         </View>
 
         <View style={styles.grid}>
@@ -56,7 +58,7 @@ export default function OnboardingScreen() {
         </View>
 
         <View style={styles.prefSection}>
-          <Text style={styles.prefTitle}>Sweet or Savory?</Text>
+          <Text style={styles.prefTitle}>{t('onboarding.prefTitle')}</Text>
           <View style={styles.prefRow}>
             {PREFERENCES.map((item) => {
               const selected = state.preference === item.value;
@@ -82,11 +84,11 @@ export default function OnboardingScreen() {
           activeOpacity={0.85}
           style={[styles.cta, !canContinue && styles.ctaDisabled]}
         >
-          <Text style={styles.ctaText}>Find Recipes</Text>
+          <Text style={styles.ctaText}>{t('onboarding.cta')}</Text>
         </TouchableOpacity>
 
         {!canContinue && (
-          <Text style={styles.hint}>Select a meal time and preference to continue</Text>
+          <Text style={styles.hint}>{t('onboarding.hint')}</Text>
         )}
       </ScrollView>
     </SafeAreaView>
