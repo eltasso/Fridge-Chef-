@@ -6,7 +6,6 @@ import {
 import { useApp } from '../context/AppContext';
 import { ShoppingItem } from '../types';
 import { shareShoppingList } from '../utils/share';
-import { colors, spacing, radius, typography, shadows } from '../styles/theme';
 
 export default function ShoppingListScreen() {
   const { state, toggleShoppingItem, removeShoppingItem, clearShoppingList } = useApp();
@@ -40,63 +39,52 @@ export default function ShoppingListScreen() {
           { text: 'Remove', style: 'destructive', onPress: () => removeShoppingItem(item.id) },
         ]);
       }}
-      activeOpacity={0.75}
-      style={[styles.item, item.checked && styles.itemChecked]}
+      activeOpacity={0.8}
+      style={styles.itemCard}
     >
       <View style={[styles.checkbox, item.checked && styles.checkboxChecked]}>
         {item.checked && <Text style={styles.checkmark}>✓</Text>}
       </View>
       <View style={styles.itemContent}>
         <Text style={[styles.itemName, item.checked && styles.itemNameChecked]}>
-          {item.name}
+          {item.amount ? `${item.amount} ` : ''}{item.name}
         </Text>
-        <Text style={styles.itemAmount}>{item.amount}</Text>
+        {item.recipeName && (
+          <Text style={styles.itemRecipe}>From: {item.recipeName}</Text>
+        )}
       </View>
-      {item.recipeName && (
-        <Text style={styles.itemRecipe} numberOfLines={1}>{item.recipeName}</Text>
-      )}
     </TouchableOpacity>
-  );
-
-  const renderHeader = () => (
-    <View style={styles.header}>
-      <Text style={styles.title}>Shopping List</Text>
-      {state.shoppingList.length > 0 && (
-        <View style={styles.headerActions}>
-          <TouchableOpacity onPress={handleShare} style={styles.headerBtn}>
-            <Text style={styles.headerBtnText}>📤 Share</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={handleClear} style={[styles.headerBtn, styles.headerBtnDanger]}>
-            <Text style={[styles.headerBtnText, styles.headerBtnDangerText]}>Clear</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-      {unchecked.length > 0 && (
-        <Text style={styles.countText}>{unchecked.length} item{unchecked.length !== 1 ? 's' : ''} to buy</Text>
-      )}
-    </View>
   );
 
   if (state.shoppingList.length === 0) {
     return (
       <SafeAreaView style={styles.safe}>
-        {renderHeader()}
+        <View style={styles.header}>
+          <Text style={styles.title}>Shopping List 🛒</Text>
+        </View>
         <View style={styles.empty}>
           <Text style={styles.emptyEmoji}>🛒</Text>
-          <Text style={styles.emptyTitle}>List is empty</Text>
-          <Text style={styles.emptySubtitle}>
-            Open a recipe and tap "Missing ingredients" to add them here
-          </Text>
+          <Text style={styles.emptyTitle}>Your list is empty</Text>
+          <Text style={styles.emptySubtitle}>Add missing ingredients from any recipe</Text>
         </View>
       </SafeAreaView>
     );
   }
 
-  const allItems = [
-    ...(unchecked.length > 0 ? [{ type: 'header', key: 'h1', label: `To buy (${unchecked.length})` }] : []),
-    ...unchecked.map((i) => ({ type: 'item', key: i.id, item: i })),
-    ...(checked.length > 0 ? [{ type: 'header', key: 'h2', label: `Done (${checked.length})` }] : []),
-    ...checked.map((i) => ({ type: 'item', key: i.id, item: i })),
+  type ListRow =
+    | { type: 'item'; key: string; item: ShoppingItem }
+    | { type: 'divider'; key: string }
+    | { type: 'section'; key: string; label: string };
+
+  const allItems: ListRow[] = [
+    ...unchecked.map((i): ListRow => ({ type: 'item', key: i.id, item: i })),
+    ...(checked.length > 0 && unchecked.length > 0
+      ? [{ type: 'divider' as const, key: 'div' }]
+      : []),
+    ...(checked.length > 0
+      ? [{ type: 'section' as const, key: 'done-header', label: `Done (${checked.length})` }]
+      : []),
+    ...checked.map((i): ListRow => ({ type: 'item', key: i.id, item: i })),
   ];
 
   return (
@@ -105,57 +93,90 @@ export default function ShoppingListScreen() {
         data={allItems}
         keyExtractor={(item) => item.key}
         contentContainerStyle={styles.list}
-        ListHeaderComponent={renderHeader}
-        renderItem={({ item }: any) => {
-          if (item.type === 'header') {
+        ListHeaderComponent={
+          <View style={styles.header}>
+            <Text style={styles.title}>Shopping List 🛒</Text>
+            <Text style={styles.subtitle}>
+              {unchecked.length} item{unchecked.length !== 1 ? 's' : ''} remaining
+            </Text>
+          </View>
+        }
+        renderItem={({ item }) => {
+          if (item.type === 'divider') {
+            return <View style={styles.divider} />;
+          }
+          if (item.type === 'section') {
             return <Text style={styles.sectionLabel}>{item.label}</Text>;
           }
           return renderItem({ item: item.item });
         }}
         showsVerticalScrollIndicator={false}
       />
+
+      {/* Bottom Bar */}
+      <View style={styles.bottomBar}>
+        <TouchableOpacity onPress={handleShare} style={styles.shareBtn} activeOpacity={0.8}>
+          <Text style={styles.shareBtnText}>📤 Share List</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={handleClear} activeOpacity={0.8}>
+          <Text style={styles.clearText}>Clear All</Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.background },
-  list: { padding: spacing.lg, paddingBottom: spacing.xxl },
-  header: { marginBottom: spacing.lg },
-  title: { ...typography.h2, marginBottom: spacing.sm },
-  headerActions: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.sm },
-  headerBtn: {
-    paddingHorizontal: spacing.md, paddingVertical: spacing.xs,
-    borderRadius: radius.full, backgroundColor: colors.surface,
-    borderWidth: 1, borderColor: colors.border,
+  safe: { flex: 1, backgroundColor: '#FAFAFA' },
+  list: { padding: 20, paddingBottom: 100 },
+
+  header: { marginBottom: 16 },
+  title: { fontSize: 32, fontWeight: '800', color: '#1A1A1A' },
+  subtitle: { fontSize: 14, color: '#999', marginTop: 4 },
+
+  itemCard: {
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+    backgroundColor: '#FFF', borderRadius: 14, padding: 16, marginBottom: 10,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06, shadowRadius: 4, elevation: 2,
   },
-  headerBtnDanger: { borderColor: colors.danger },
-  headerBtnText: { fontSize: 13, color: colors.textSecondary, fontWeight: '600' },
-  headerBtnDangerText: { color: colors.danger },
-  countText: { ...typography.body, color: colors.textSecondary },
-  sectionLabel: {
-    ...typography.label, textTransform: 'uppercase', letterSpacing: 0.5,
-    color: colors.textMuted, marginVertical: spacing.sm,
-  },
-  item: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface,
-    borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.sm,
-    gap: spacing.md, ...shadows.sm,
-  },
-  itemChecked: { opacity: 0.55 },
   checkbox: {
-    width: 24, height: 24, borderRadius: 12, borderWidth: 2,
-    borderColor: colors.border, alignItems: 'center', justifyContent: 'center',
+    width: 24, height: 24, borderRadius: 12,
+    borderWidth: 2, borderColor: '#FF6B35',
+    alignItems: 'center', justifyContent: 'center',
+    flexShrink: 0,
   },
-  checkboxChecked: { backgroundColor: colors.success, borderColor: colors.success },
-  checkmark: { color: '#fff', fontSize: 12, fontWeight: '700' },
+  checkboxChecked: { backgroundColor: '#FF6B35', borderColor: '#FF6B35' },
+  checkmark: { color: '#FFF', fontSize: 12, fontWeight: '700' },
   itemContent: { flex: 1 },
-  itemName: { ...typography.body, fontWeight: '500' },
-  itemNameChecked: { textDecorationLine: 'line-through', color: colors.textMuted },
-  itemAmount: { ...typography.bodySmall, marginTop: 2 },
-  itemRecipe: { ...typography.caption, maxWidth: 80, textAlign: 'right' },
-  empty: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.xl },
-  emptyEmoji: { fontSize: 64, marginBottom: spacing.md },
-  emptyTitle: { ...typography.h3, marginBottom: spacing.sm },
-  emptySubtitle: { ...typography.body, color: colors.textSecondary, textAlign: 'center' },
+  itemName: { fontSize: 17, fontWeight: '600', color: '#1A1A1A' },
+  itemNameChecked: { textDecorationLine: 'line-through', color: '#BBB' },
+  itemRecipe: { fontSize: 13, color: '#999', marginTop: 2 },
+
+  divider: { height: 1, backgroundColor: '#EEEEEE', marginVertical: 12 },
+  sectionLabel: {
+    fontSize: 12, fontWeight: '600', color: '#999',
+    letterSpacing: 1, marginBottom: 10, textTransform: 'uppercase',
+  },
+
+  empty: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
+  emptyEmoji: { fontSize: 64, marginBottom: 16 },
+  emptyTitle: { fontSize: 22, fontWeight: '700', color: '#1A1A1A', marginBottom: 8 },
+  emptySubtitle: { fontSize: 15, color: '#999', textAlign: 'center', lineHeight: 22 },
+
+  bottomBar: {
+    position: 'absolute', bottom: 0, left: 0, right: 0,
+    backgroundColor: '#FFF', flexDirection: 'row', alignItems: 'center',
+    padding: 20, paddingBottom: 28, gap: 16,
+    borderTopWidth: 1, borderTopColor: '#EEEEEE',
+    shadowColor: '#000', shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.06, shadowRadius: 8, elevation: 6,
+  },
+  shareBtn: {
+    flex: 1, height: 52, borderRadius: 16,
+    borderWidth: 2, borderColor: '#4ECDC4',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  shareBtnText: { color: '#4ECDC4', fontWeight: '700', fontSize: 15 },
+  clearText: { color: '#E85D4C', fontWeight: '600', fontSize: 15, paddingHorizontal: 8 },
 });

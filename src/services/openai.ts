@@ -1,5 +1,51 @@
 import { Recipe, MealTime, Preference, Difficulty, DietaryTag } from '../types';
 
+export async function scanIngredients(imageBase64: string): Promise<string[]> {
+  const apiKey = process.env.EXPO_PUBLIC_OPENAI_API_KEY;
+  if (!apiKey || apiKey === 'your_api_key_here') {
+    return [];
+  }
+
+  try {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o',
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: 'Look at this image and identify all food ingredients you can see. Return ONLY a JSON array of ingredient names in English, like ["chicken", "rice", "onion"]. No other text.',
+              },
+              {
+                type: 'image_url',
+                image_url: { url: `data:image/jpeg;base64,${imageBase64}` },
+              },
+            ],
+          },
+        ],
+        max_tokens: 300,
+      }),
+    });
+
+    if (!response.ok) return [];
+
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content ?? '';
+    const match = content.match(/\[[\s\S]*\]/);
+    if (!match) return [];
+    return JSON.parse(match[0]) as string[];
+  } catch {
+    return [];
+  }
+}
+
 const API_KEY = process.env.EXPO_PUBLIC_OPENAI_API_KEY;
 
 interface GenerateParams {
