@@ -1,11 +1,14 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, SafeAreaView,
-  StatusBar, Platform,
+  View, Text, StyleSheet, TouchableOpacity,
+  Animated, Platform, StatusBar as RNStatusBar,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation, useLanguage } from '../context/LanguageContext';
+
+const FOOD_IMAGE =
+  'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=900&q=80';
 
 export default function WelcomeScreen() {
   const { signInWithAppleFn, signInWithGoogleFn, continueAsGuest } = useAuth();
@@ -13,19 +16,40 @@ export default function WelcomeScreen() {
   const { language, setLanguage } = useLanguage();
   const navigation = useNavigation<any>();
 
+  // Slow Ken-Burns zoom animation
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(scaleAnim, { toValue: 1.08, duration: 14000, useNativeDriver: true }),
+        Animated.timing(scaleAnim, { toValue: 1.0, duration: 14000, useNativeDriver: true }),
+      ])
+    ).start();
+  }, []);
+
   const handleApple = () =>
     signInWithAppleFn(t('welcome.comingSoon'), t('welcome.comingSoonMsg'));
-
   const handleGoogle = () =>
     signInWithGoogleFn(t('welcome.comingSoon'), t('welcome.comingSoonMsg'));
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FAFAFA" />
+    <View style={styles.root}>
+      <RNStatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
-      {/* Language selector — top right */}
+      {/* Animated food background */}
+      <View style={StyleSheet.absoluteFill}>
+        <Animated.Image
+          source={{ uri: FOOD_IMAGE }}
+          style={[StyleSheet.absoluteFill, { transform: [{ scale: scaleAnim }] }]}
+          resizeMode="cover"
+        />
+        {/* Dark overlay */}
+        <View style={styles.overlay} />
+      </View>
+
+      {/* Language selector */}
       <View style={styles.langRow}>
-        <Text style={styles.langLabel}>{t('welcome.language')}  </Text>
+        <Text style={styles.langLabel}>{t('welcome.language')}</Text>
         <TouchableOpacity
           onPress={() => setLanguage('es')}
           style={[styles.langPill, language === 'es' && styles.langPillActive]}
@@ -51,54 +75,27 @@ export default function WelcomeScreen() {
         <Text style={styles.tagline}>{t('welcome.tagline')}</Text>
       </View>
 
-      {/* Decorative ingredient pills */}
-      <View style={styles.pillsDecor}>
-        {['🥚', '🧀', '🥕', '🍅', '🧄', '🥦'].map((emoji, i) => (
-          <View key={i} style={styles.decorPill}>
-            <Text style={styles.decorEmoji}>{emoji}</Text>
-          </View>
-        ))}
-      </View>
-
-      {/* Auth buttons */}
+      {/* Buttons */}
       <View style={styles.buttonsArea}>
-        {/* Apple */}
-        <TouchableOpacity
-          style={styles.appleBtn}
-          onPress={handleApple}
-          activeOpacity={0.85}
-        >
-          <Text style={styles.appleBtnIcon}>  </Text>
+        <TouchableOpacity style={styles.appleBtn} onPress={handleApple} activeOpacity={0.85}>
           <Text style={styles.appleBtnText}>{t('welcome.continueApple')}</Text>
         </TouchableOpacity>
 
-        {/* Google */}
-        <TouchableOpacity
-          style={styles.googleBtn}
-          onPress={handleGoogle}
-          activeOpacity={0.85}
-        >
+        <TouchableOpacity style={styles.googleBtn} onPress={handleGoogle} activeOpacity={0.85}>
           <Text style={styles.googleIcon}>G</Text>
           <Text style={styles.googleBtnText}>{t('welcome.continueGoogle')}</Text>
         </TouchableOpacity>
 
-        {/* Divider */}
         <View style={styles.dividerRow}>
           <View style={styles.dividerLine} />
           <Text style={styles.dividerText}>o</Text>
           <View style={styles.dividerLine} />
         </View>
 
-        {/* Guest */}
-        <TouchableOpacity
-          onPress={continueAsGuest}
-          activeOpacity={0.7}
-          style={styles.guestBtn}
-        >
+        <TouchableOpacity onPress={continueAsGuest} activeOpacity={0.7} style={styles.guestBtn}>
           <Text style={styles.guestText}>{t('welcome.continueGuest')}</Text>
         </TouchableOpacity>
 
-        {/* Legal acceptance */}
         <Text style={styles.acceptText}>
           {t('legal.acceptPrefix')}
           <Text style={styles.acceptLink} onPress={() => navigation.navigate('PrivacyPolicy')}>
@@ -110,196 +107,91 @@ export default function WelcomeScreen() {
           </Text>
         </Text>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: '#FAFAFA',
-    paddingHorizontal: 24,
+  root: { flex: 1, backgroundColor: '#000' },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.52)',
   },
 
   langRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-end',
-    paddingTop: Platform.OS === 'android' ? 16 : 8,
-    paddingBottom: 8,
+    paddingTop: Platform.OS === 'android' ? 44 : 56,
+    paddingHorizontal: 24,
     gap: 6,
+    zIndex: 10,
   },
-  langLabel: {
-    fontSize: 13,
-    color: '#999',
-    fontWeight: '500',
-  },
+  langLabel: { fontSize: 13, color: 'rgba(255,255,255,0.7)', fontWeight: '500' },
   langPill: {
-    borderRadius: 20,
-    borderWidth: 1.5,
-    borderColor: '#DDD',
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    backgroundColor: '#FFF',
+    borderRadius: 20, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.4)',
+    paddingHorizontal: 12, paddingVertical: 5,
   },
-  langPillActive: {
-    backgroundColor: '#FF6B35',
-    borderColor: '#FF6B35',
-  },
-  langPillText: {
-    fontSize: 13,
-    color: '#666',
-    fontWeight: '500',
-  },
-  langPillTextActive: {
-    color: '#FFF',
-    fontWeight: '700',
-  },
+  langPillActive: { backgroundColor: '#FF6B35', borderColor: '#FF6B35' },
+  langPillText: { fontSize: 13, color: 'rgba(255,255,255,0.8)', fontWeight: '500' },
+  langPillTextActive: { color: '#FFF', fontWeight: '700' },
 
   hero: {
+    flex: 1,
     alignItems: 'center',
-    marginTop: 48,
-    marginBottom: 36,
+    justifyContent: 'center',
+    paddingBottom: 40,
+    zIndex: 10,
   },
-  heroEmoji: {
-    fontSize: 88,
-    marginBottom: 16,
-  },
+  heroEmoji: { fontSize: 90, marginBottom: 20 },
   appName: {
-    fontSize: 42,
-    fontWeight: '900',
-    color: '#1A1A1A',
-    letterSpacing: -1,
-    marginBottom: 10,
+    fontSize: 48, fontWeight: '900', color: '#FFFFFF',
+    letterSpacing: -1, marginBottom: 12,
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 8,
   },
   tagline: {
-    fontSize: 18,
-    color: '#999',
-    fontWeight: '400',
-    letterSpacing: 0.2,
-  },
-
-  pillsDecor: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 10,
-    marginBottom: 48,
-  },
-  decorPill: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#FFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 3,
-  },
-  decorEmoji: {
-    fontSize: 22,
+    fontSize: 18, color: 'rgba(255,255,255,0.75)',
+    fontWeight: '400', letterSpacing: 0.3,
   },
 
   buttonsArea: {
-    flex: 1,
-    justifyContent: 'flex-end',
+    paddingHorizontal: 24,
     paddingBottom: 40,
     gap: 12,
+    zIndex: 10,
   },
 
   appleBtn: {
-    backgroundColor: '#1A1A1A',
-    borderRadius: 16,
-    height: 56,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    borderRadius: 16, height: 56,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)',
   },
-  appleBtnIcon: {
-    fontSize: 22,
-    color: '#FFF',
-  },
-  appleBtnText: {
-    color: '#FFF',
-    fontSize: 17,
-    fontWeight: '700',
-  },
+  appleBtnText: { color: '#FFF', fontSize: 17, fontWeight: '700' },
 
   googleBtn: {
-    backgroundColor: '#FFF',
-    borderRadius: 16,
-    height: 56,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    borderWidth: 1.5,
-    borderColor: '#E0E0E0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 2,
+    backgroundColor: 'rgba(255,255,255,0.95)',
+    borderRadius: 16, height: 56,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
   },
-  googleIcon: {
-    fontSize: 20,
-    fontWeight: '900',
-    color: '#4285F4',
-  },
-  googleBtnText: {
-    color: '#1A1A1A',
-    fontSize: 17,
-    fontWeight: '600',
-  },
+  googleIcon: { fontSize: 20, fontWeight: '900', color: '#4285F4' },
+  googleBtnText: { color: '#1A1A1A', fontSize: 17, fontWeight: '600' },
 
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginVertical: 4,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#EEEEEE',
-  },
-  dividerText: {
-    fontSize: 14,
-    color: '#BBB',
-    fontWeight: '500',
-  },
+  dividerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginVertical: 2 },
+  dividerLine: { flex: 1, height: 1, backgroundColor: 'rgba(255,255,255,0.2)' },
+  dividerText: { fontSize: 14, color: 'rgba(255,255,255,0.4)', fontWeight: '500' },
 
-  guestBtn: {
-    height: 48,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  guestBtn: { height: 44, alignItems: 'center', justifyContent: 'center' },
   guestText: {
-    fontSize: 15,
-    color: '#999',
-    fontWeight: '500',
-    textDecorationLine: 'underline',
-    textDecorationColor: '#CCC',
+    fontSize: 15, color: 'rgba(255,255,255,0.7)', fontWeight: '500',
+    textDecorationLine: 'underline', textDecorationColor: 'rgba(255,255,255,0.3)',
   },
 
   acceptText: {
-    fontSize: 12,
-    color: '#BBB',
-    textAlign: 'center',
-    lineHeight: 18,
-    paddingHorizontal: 8,
+    fontSize: 12, color: 'rgba(255,255,255,0.4)',
+    textAlign: 'center', lineHeight: 18, paddingHorizontal: 8,
   },
-  acceptLink: {
-    color: '#999',
-    textDecorationLine: 'underline',
-    textDecorationColor: '#CCC',
-  },
+  acceptLink: { color: 'rgba(255,255,255,0.6)', textDecorationLine: 'underline' },
 });

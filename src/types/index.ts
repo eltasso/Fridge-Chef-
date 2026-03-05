@@ -92,6 +92,7 @@ export type AppStackParamList = {
 
 export type RootStackParamList = {
   Ingredients: undefined;
+  ManualIngredients: undefined;
   MealStep: undefined;
   PeopleStep: undefined;
   CuisineStep: undefined;

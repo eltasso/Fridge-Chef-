@@ -16,6 +16,7 @@ import { colors } from './src/styles/theme';
 
 import WelcomeScreen from './src/screens/WelcomeScreen';
 import IngredientsScreen from './src/screens/IngredientsScreen';
+import ManualIngredientsScreen from './src/screens/ManualIngredientsScreen';
 import MealStepScreen from './src/screens/MealStepScreen';
 import PeopleStepScreen from './src/screens/PeopleStepScreen';
 import CuisineStepScreen from './src/screens/CuisineStepScreen';
@@ -37,6 +38,7 @@ function HomeStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Ingredients" component={IngredientsScreen} />
+      <Stack.Screen name="ManualIngredients" component={ManualIngredientsScreen} />
       <Stack.Screen name="MealStep" component={MealStepScreen} />
       <Stack.Screen name="PeopleStep" component={PeopleStepScreen} />
       <Stack.Screen name="CuisineStep" component={CuisineStepScreen} />
@@ -72,19 +74,26 @@ function FavoritesBadge() {
 
 function MainTabs() {
   const { t } = useTranslation();
+  const { state } = useApp();
+
+  // Hide tab bar until onboarding is completed
+  const tabBarStyle = state.onboardingCompleted
+    ? {
+        borderTopWidth: 1,
+        borderTopColor: colors.border,
+        backgroundColor: colors.surface,
+        height: 60,
+        paddingBottom: 8,
+      }
+    : { display: 'none' as const };
+
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
-        tabBarStyle: {
-          borderTopWidth: 1,
-          borderTopColor: colors.border,
-          backgroundColor: colors.surface,
-          height: 60,
-          paddingBottom: 8,
-        },
+        tabBarStyle,
         tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
       }}
     >
@@ -147,7 +156,7 @@ function RootNavigator() {
 
   return (
     <NavigationContainer>
-      <StatusBar style="dark" />
+      <StatusBar style="light" />
       <AppStack.Navigator screenOptions={{ headerShown: false }}>
         {isAuthenticated ? (
           <>

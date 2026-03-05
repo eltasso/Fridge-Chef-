@@ -5,6 +5,7 @@ import {
   loadFavorites, saveFavorites,
   loadShoppingList, saveShoppingList,
   loadCachedRecipes, saveCachedRecipes,
+  loadOnboardingPrefs, saveOnboardingPrefs,
   buildCacheKey,
 } from '../utils/storage';
 
@@ -135,13 +136,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     (async () => {
-      const [pantryIngredients, favorites, shoppingList, cachedRecipes] = await Promise.all([
+      const [pantryIngredients, favorites, shoppingList, cachedRecipes, onboardingPrefs] = await Promise.all([
         loadPantry(),
         loadFavorites(),
         loadShoppingList(),
         loadCachedRecipes(),
+        loadOnboardingPrefs(),
       ]);
-      dispatch({ type: 'HYDRATE', payload: { pantryIngredients, favorites, shoppingList, cachedRecipes } });
+      dispatch({
+        type: 'HYDRATE',
+        payload: {
+          pantryIngredients, favorites, shoppingList, cachedRecipes,
+          onboardingCompleted: onboardingPrefs.completed,
+          servings: onboardingPrefs.servings,
+          cuisineTypes: onboardingPrefs.cuisineTypes,
+        },
+      });
     })();
   }, []);
 
@@ -149,6 +159,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => { saveFavorites(state.favorites); }, [state.favorites]);
   useEffect(() => { saveShoppingList(state.shoppingList); }, [state.shoppingList]);
   useEffect(() => { saveCachedRecipes(state.cachedRecipes); }, [state.cachedRecipes]);
+  useEffect(() => {
+    saveOnboardingPrefs({
+      completed: state.onboardingCompleted,
+      servings: state.servings,
+      cuisineTypes: state.cuisineTypes,
+    });
+  }, [state.onboardingCompleted, state.servings, state.cuisineTypes]);
 
   const setMealTime = useCallback((m: MealTime) => dispatch({ type: 'SET_MEAL_TIME', payload: m }), []);
   const setPreference = useCallback((p: Preference) => dispatch({ type: 'SET_PREFERENCE', payload: p }), []);

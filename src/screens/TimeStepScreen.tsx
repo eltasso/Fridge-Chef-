@@ -5,14 +5,17 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { useApp } from '../context/AppContext';
 import { useTranslation } from '../context/LanguageContext';
 import { RootStackParamList } from '../types';
+import { useHideTabBar } from '../hooks/useHideTabBar';
 import ProgressDots from '../components/common/ProgressDots';
 import StepCard from '../components/common/StepCard';
 
 type Nav = StackNavigationProp<RootStackParamList, 'TimeStep'>;
 
-const TIME_OPTIONS: { value: number; emoji: string; titleKey: string; subKey: string }[] = [
-  { value: 15,   emoji: '⚡',    titleKey: 'steps.time15',       subKey: 'steps.time15Sub' },
-  { value: 30,   emoji: '🕐',    titleKey: 'steps.time30',       subKey: 'steps.time30Sub' },
+const ROW1 = [
+  { value: 15,   emoji: '⚡',    titleKey: 'steps.time15', subKey: 'steps.time15Sub' },
+  { value: 30,   emoji: '🕐',    titleKey: 'steps.time30', subKey: 'steps.time30Sub' },
+];
+const ROW2 = [
   { value: 60,   emoji: '🕐',    titleKey: 'steps.time60',       subKey: 'steps.time60Sub' },
   { value: 9999, emoji: '👨‍🍳', titleKey: 'steps.timeUnlimited', subKey: 'steps.timeUnlimitedSub' },
 ];
@@ -22,6 +25,7 @@ export default function TimeStepScreen() {
   const { state, setFilters, setOnboardingCompleted } = useApp();
   const { t } = useTranslation();
   const [selected, setSelected] = useState<number | null>(state.filters.maxTime);
+  useHideTabBar();
 
   const handleSelect = (value: number) => {
     setSelected(value);
@@ -34,10 +38,11 @@ export default function TimeStepScreen() {
     navigation.navigate('Paywall', { fromOnboarding: true });
   };
 
+  const allRows = [ROW1, ROW2];
+
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.container}>
-        {/* Header */}
         <View style={styles.topRow}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
             <Text style={styles.backText}>{t('steps.prev')}</Text>
@@ -50,28 +55,32 @@ export default function TimeStepScreen() {
         <Text style={styles.subtitle}>{t('steps.timeSubtitle')}</Text>
 
         <View style={styles.grid}>
-          {TIME_OPTIONS.map((opt) => (
-            <StepCard
-              key={opt.value}
-              emoji={opt.emoji}
-              title={t(opt.titleKey as any)}
-              subtitle={t(opt.subKey as any)}
-              selected={selected === opt.value}
-              onPress={() => handleSelect(opt.value)}
-            />
+          {allRows.map((row, ri) => (
+            <View key={ri} style={styles.row}>
+              {row.map((opt) => (
+                <StepCard
+                  key={opt.value}
+                  emoji={opt.emoji}
+                  title={t(opt.titleKey as any)}
+                  subtitle={t(opt.subKey as any)}
+                  selected={selected === opt.value}
+                  onPress={() => handleSelect(opt.value)}
+                />
+              ))}
+            </View>
           ))}
         </View>
 
-        <View style={styles.buttons}>
-          <TouchableOpacity
-            style={[styles.nextBtn, !selected && styles.nextBtnDisabled]}
-            onPress={handleSeeRecipes}
-            activeOpacity={0.85}
-            disabled={!selected}
-          >
-            <Text style={styles.nextBtnText}>{t('steps.seeRecipes')}</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          style={[styles.nextBtn, !selected && styles.nextBtnDisabled]}
+          onPress={handleSeeRecipes}
+          activeOpacity={0.85}
+          disabled={!selected}
+        >
+          <Text style={[styles.nextBtnText, !selected && styles.nextBtnTextDisabled]}>
+            {t('steps.seeRecipes')}
+          </Text>
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
@@ -82,19 +91,20 @@ const styles = StyleSheet.create({
   container: { flex: 1, padding: 24 },
   topRow: {
     flexDirection: 'row', alignItems: 'center',
-    justifyContent: 'space-between', marginBottom: 24,
+    justifyContent: 'space-between', marginBottom: 20,
   },
   backBtn: { paddingVertical: 4 },
   backText: { fontSize: 15, color: '#999', fontWeight: '500' },
-  stepLabel: { fontSize: 13, color: '#999', marginBottom: 8, fontWeight: '500' },
-  title: { fontSize: 26, fontWeight: '800', color: '#1A1A1A', marginBottom: 6 },
-  subtitle: { fontSize: 14, color: '#999', marginBottom: 28 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, flex: 1 },
-  buttons: { paddingTop: 16 },
+  stepLabel: { fontSize: 13, color: '#999', marginBottom: 6, fontWeight: '500' },
+  title: { fontSize: 24, fontWeight: '800', color: '#1A1A1A', marginBottom: 4 },
+  subtitle: { fontSize: 14, color: '#999', marginBottom: 20 },
+  grid: { flex: 1, gap: 12 },
+  row: { flex: 1, flexDirection: 'row', gap: 12 },
   nextBtn: {
     backgroundColor: '#FF6B35', borderRadius: 16, height: 56,
-    alignItems: 'center', justifyContent: 'center',
+    alignItems: 'center', justifyContent: 'center', marginTop: 16,
   },
   nextBtnDisabled: { backgroundColor: '#F0F0F0' },
   nextBtnText: { color: '#FFF', fontSize: 17, fontWeight: '700' },
+  nextBtnTextDisabled: { color: '#CCC' },
 });
