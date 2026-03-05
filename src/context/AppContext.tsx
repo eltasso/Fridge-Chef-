@@ -21,6 +21,9 @@ type Action =
   | { type: 'REMOVE_SHOPPING_ITEM'; payload: string }
   | { type: 'CLEAR_SHOPPING_LIST' }
   | { type: 'SET_CACHED_RECIPES'; payload: { key: string; recipes: Recipe[] } }
+  | { type: 'SET_SERVINGS'; payload: number }
+  | { type: 'SET_CUISINE_TYPES'; payload: string[] }
+  | { type: 'SET_ONBOARDING_COMPLETED'; payload: boolean }
   | { type: 'HYDRATE'; payload: Partial<AppState> };
 
 const initialState: AppState = {
@@ -32,6 +35,9 @@ const initialState: AppState = {
   favorites: [],
   shoppingList: [],
   cachedRecipes: {},
+  servings: 2,
+  cuisineTypes: [],
+  onboardingCompleted: false,
 };
 
 function reducer(state: AppState, action: Action): AppState {
@@ -89,6 +95,12 @@ function reducer(state: AppState, action: Action): AppState {
         ...state,
         cachedRecipes: { ...state.cachedRecipes, [action.payload.key]: action.payload.recipes },
       };
+    case 'SET_SERVINGS':
+      return { ...state, servings: action.payload };
+    case 'SET_CUISINE_TYPES':
+      return { ...state, cuisineTypes: action.payload };
+    case 'SET_ONBOARDING_COMPLETED':
+      return { ...state, onboardingCompleted: action.payload };
     case 'HYDRATE':
       return { ...state, ...action.payload };
     default:
@@ -111,6 +123,9 @@ interface AppContextValue {
   clearShoppingList: () => void;
   setCachedRecipes: (key: string, recipes: Recipe[]) => void;
   getCacheKey: () => string;
+  setServings: (n: number) => void;
+  setCuisineTypes: (types: string[]) => void;
+  setOnboardingCompleted: (v: boolean) => void;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -151,13 +166,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const getCacheKey = useCallback(() =>
     buildCacheKey(state.sessionIngredients, state.mealTime ?? '', state.preference ?? ''),
     [state.sessionIngredients, state.mealTime, state.preference]);
+  const setServings = useCallback((n: number) => dispatch({ type: 'SET_SERVINGS', payload: n }), []);
+  const setCuisineTypes = useCallback((types: string[]) => dispatch({ type: 'SET_CUISINE_TYPES', payload: types }), []);
+  const setOnboardingCompleted = useCallback((v: boolean) => dispatch({ type: 'SET_ONBOARDING_COMPLETED', payload: v }), []);
 
   return (
     <AppContext.Provider value={{
       state, setMealTime, setPreference, addIngredient, removeIngredient,
       setFilters, toggleFavorite, isFavorite, addToShoppingList,
       toggleShoppingItem, removeShoppingItem, clearShoppingList,
-      setCachedRecipes, getCacheKey,
+      setCachedRecipes, getCacheKey, setServings, setCuisineTypes, setOnboardingCompleted,
     }}>
       {children}
     </AppContext.Provider>

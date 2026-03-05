@@ -15,8 +15,11 @@ import { AppStackParamList, RootStackParamList, TabParamList } from './src/types
 import { colors } from './src/styles/theme';
 
 import WelcomeScreen from './src/screens/WelcomeScreen';
-import OnboardingScreen from './src/screens/OnboardingScreen';
 import IngredientsScreen from './src/screens/IngredientsScreen';
+import MealStepScreen from './src/screens/MealStepScreen';
+import PeopleStepScreen from './src/screens/PeopleStepScreen';
+import CuisineStepScreen from './src/screens/CuisineStepScreen';
+import TimeStepScreen from './src/screens/TimeStepScreen';
 import RecipeListScreen from './src/screens/RecipeListScreen';
 import RecipeDetailScreen from './src/screens/RecipeDetailScreen';
 import FavoritesScreen from './src/screens/FavoritesScreen';
@@ -33,8 +36,12 @@ const Tab = createBottomTabNavigator<TabParamList>();
 function HomeStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Onboarding" component={OnboardingScreen} />
       <Stack.Screen name="Ingredients" component={IngredientsScreen} />
+      <Stack.Screen name="MealStep" component={MealStepScreen} />
+      <Stack.Screen name="PeopleStep" component={PeopleStepScreen} />
+      <Stack.Screen name="CuisineStep" component={CuisineStepScreen} />
+      <Stack.Screen name="TimeStep" component={TimeStepScreen} />
+      <Stack.Screen name="Paywall" component={PaywallScreen} />
       <Stack.Screen name="RecipeList" component={RecipeListScreen} />
       <Stack.Screen name="RecipeDetail" component={RecipeDetailScreen} />
     </Stack.Navigator>
@@ -147,14 +154,12 @@ function RootNavigator() {
             <AppStack.Screen name="Main" component={MainTabs} />
             <AppStack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
             <AppStack.Screen name="Terms" component={TermsScreen} />
-            <AppStack.Screen name="Paywall" component={PaywallScreen} />
           </>
         ) : (
           <>
             <AppStack.Screen name="Welcome" component={WelcomeScreen} />
             <AppStack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
             <AppStack.Screen name="Terms" component={TermsScreen} />
-            <AppStack.Screen name="Paywall" component={PaywallScreen} />
           </>
         )}
       </AppStack.Navigator>

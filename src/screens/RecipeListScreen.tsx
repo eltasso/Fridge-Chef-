@@ -124,6 +124,10 @@ export default function RecipeListScreen() {
         preference: state.preference,
         difficulty: state.filters.difficulty,
         dietary: state.filters.dietary,
+        language,
+        servings: state.servings,
+        cuisineTypes: state.cuisineTypes,
+        maxTime: state.filters.maxTime,
       });
       setAiRecipes(recipes);
       setCachedRecipes(cacheKey, recipes);
@@ -159,6 +163,10 @@ export default function RecipeListScreen() {
         preference: state.preference,
         difficulty: state.filters.difficulty,
         dietary: state.filters.dietary,
+        language,
+        servings: state.servings,
+        cuisineTypes: state.cuisineTypes,
+        maxTime: state.filters.maxTime,
       });
       setAiRecipes(recipes);
       setCachedRecipes(cacheKey, recipes);

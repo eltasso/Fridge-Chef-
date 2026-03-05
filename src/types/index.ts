@@ -76,6 +76,10 @@ export interface AppState {
   favorites: Recipe[];
   shoppingList: ShoppingItem[];
   cachedRecipes: { [key: string]: Recipe[] };
+  // New onboarding fields
+  servings: number;
+  cuisineTypes: string[];
+  onboardingCompleted: boolean;
 }
 
 export type AppStackParamList = {
@@ -83,12 +87,16 @@ export type AppStackParamList = {
   Main: undefined;
   PrivacyPolicy: undefined;
   Terms: undefined;
-  Paywall: undefined;
+  Paywall: { fromOnboarding?: boolean } | undefined;
 };
 
 export type RootStackParamList = {
-  Onboarding: undefined;
   Ingredients: undefined;
+  MealStep: undefined;
+  PeopleStep: undefined;
+  CuisineStep: undefined;
+  TimeStep: undefined;
+  Paywall: { fromOnboarding?: boolean } | undefined;
   RecipeList: undefined;
   RecipeDetail: { recipe: Recipe };
 };

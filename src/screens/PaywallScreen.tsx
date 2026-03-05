@@ -3,16 +3,22 @@ import {
   View, Text, StyleSheet, ScrollView, SafeAreaView,
   TouchableOpacity, ActivityIndicator,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
 import { useTranslation } from '../context/LanguageContext';
 import { useSubscription } from '../context/SubscriptionContext';
 import { PackageId } from '../services/subscriptions';
+import { RootStackParamList } from '../types';
+
+type Nav = StackNavigationProp<RootStackParamList, 'Paywall'>;
+type RouteType = RouteProp<RootStackParamList, 'Paywall'>;
 
 export default function PaywallScreen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<Nav>();
+  const route = useRoute<RouteType>();
+  const fromOnboarding = route.params?.fromOnboarding ?? false;
   const { t } = useTranslation();
   const { purchase, restore } = useSubscription();
-  const [selectedPkgId, setSelectedPkgId] = useState<PackageId>('annual');
   const [loading, setLoading] = useState(false);
   const [restoring, setRestoring] = useState(false);
 
@@ -30,24 +36,43 @@ export default function PaywallScreen() {
     t('paywall.premium5'),
   ];
 
-  const handlePurchase = async () => {
+  const navigateAfter = () => {
+    if (fromOnboarding) {
+      navigation.navigate('RecipeList');
+    } else {
+      navigation.goBack();
+    }
+  };
+
+  const handlePurchaseAnnual = async () => {
     setLoading(true);
-    const success = await purchase(selectedPkgId);
+    const success = await purchase('annual' as PackageId);
     setLoading(false);
-    if (success) navigation.goBack();
+    if (success) navigateAfter();
+  };
+
+  const handlePurchaseWeekly = async () => {
+    setLoading(true);
+    const success = await purchase('monthly' as PackageId);
+    setLoading(false);
+    if (success) navigateAfter();
   };
 
   const handleRestore = async () => {
     setRestoring(true);
     const success = await restore();
     setRestoring(false);
-    if (success) navigation.goBack();
+    if (success) navigateAfter();
+  };
+
+  const handleContinueFree = () => {
+    navigateAfter();
   };
 
   return (
     <SafeAreaView style={styles.safe}>
       {/* Close button */}
-      <TouchableOpacity style={styles.closeBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
+      <TouchableOpacity style={styles.closeBtn} onPress={navigateAfter} activeOpacity={0.7}>
         <Text style={styles.closeIcon}>✕</Text>
       </TouchableOpacity>
 
@@ -61,7 +86,6 @@ export default function PaywallScreen() {
 
         {/* Feature comparison table */}
         <View style={styles.featureCard}>
-          {/* Header row */}
           <View style={styles.featureHeaderRow}>
             <Text style={[styles.featureColHeader, { flex: 1 }]}>{t('paywall.colFeature')}</Text>
             <Text style={[styles.featureColHeader, styles.featureColCenter]}>{t('paywall.colFree')}</Text>
@@ -70,7 +94,6 @@ export default function PaywallScreen() {
             </Text>
           </View>
 
-          {/* Free features — both columns ✅ */}
           {freeFeatures.map((label, i) => (
             <View key={`free-${i}`} style={[styles.featureRow, i % 2 === 1 && styles.featureRowAlt]}>
               <Text style={styles.featureName}>{label}</Text>
@@ -79,7 +102,6 @@ export default function PaywallScreen() {
             </View>
           ))}
 
-          {/* Premium features — free column 🔒, premium ✅ */}
           {premiumFeatures.map((label, i) => (
             <View
               key={`premium-${i}`}
@@ -92,46 +114,54 @@ export default function PaywallScreen() {
           ))}
         </View>
 
-        {/* Plan picker */}
+        {/* Plan cards */}
         <Text style={styles.pricingTitle}>{t('paywall.choosePlan')}</Text>
         <View style={styles.pricingRow}>
-          {/* Monthly */}
-          <TouchableOpacity
-            style={[styles.priceCard, selectedPkgId === 'monthly' && styles.priceCardSelected]}
-            onPress={() => setSelectedPkgId('monthly')}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.priceLabel}>{t('paywall.monthly')}</Text>
-            <Text style={styles.priceAmount}>{t('paywall.priceMonthly')}</Text>
-          </TouchableOpacity>
+          {/* Weekly */}
+          <View style={styles.weeklyCard}>
+            <Text style={styles.priceLabel}>{t('paywall.weekly')}</Text>
+            <Text style={styles.priceAmount}>{t('paywall.priceWeekly')}</Text>
+            <Text style={styles.priceBilled}>{t('paywall.weeklyBilled')}</Text>
+          </View>
 
-          {/* Annual (recommended) */}
-          <TouchableOpacity
-            style={[styles.priceCard, styles.priceCardAnnual, selectedPkgId === 'annual' && styles.priceCardSelected]}
-            onPress={() => setSelectedPkgId('annual')}
-            activeOpacity={0.8}
-          >
-            <View style={styles.savingsBadge}>
-              <Text style={styles.savingsText}>{t('paywall.savings')}</Text>
+          {/* Annual — highlighted */}
+          <View style={styles.annualCard}>
+            <View style={styles.badgeRow}>
+              <View style={styles.freeBadge}>
+                <Text style={styles.badgeText}>{t('paywall.annualFree')}</Text>
+              </View>
+              <View style={styles.savingsBadge}>
+                <Text style={styles.badgeText}>{t('paywall.savings')}</Text>
+              </View>
             </View>
-            <Text style={styles.priceLabel}>{t('paywall.annual')}</Text>
-            <Text style={styles.priceAmount}>{t('paywall.priceAnnual')}</Text>
-            <Text style={styles.perMonth}>{t('paywall.perMonth')}</Text>
-          </TouchableOpacity>
+            <Text style={[styles.priceLabel, { color: '#FF6B35' }]}>{t('paywall.annual')}</Text>
+            <Text style={[styles.priceAmount, { fontSize: 22 }]}>{t('paywall.priceAnnual')}</Text>
+            <Text style={styles.priceBilled}>{t('paywall.perMonth')}</Text>
+          </View>
         </View>
 
-        {/* CTA */}
+        {/* CTA — Annual (primary) */}
         <TouchableOpacity
-          style={styles.ctaBtn}
-          onPress={handlePurchase}
+          style={styles.ctaBtnPrimary}
+          onPress={handlePurchaseAnnual}
           disabled={loading}
           activeOpacity={0.85}
         >
           {loading ? (
             <ActivityIndicator color="#FFF" />
           ) : (
-            <Text style={styles.ctaText}>{t('paywall.cta')}</Text>
+            <Text style={styles.ctaTextPrimary}>{t('paywall.ctaAnnual')}</Text>
           )}
+        </TouchableOpacity>
+
+        {/* CTA — Weekly (secondary) */}
+        <TouchableOpacity
+          style={styles.ctaBtnSecondary}
+          onPress={handlePurchaseWeekly}
+          disabled={loading}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.ctaTextSecondary}>{t('paywall.ctaWeekly')}</Text>
         </TouchableOpacity>
 
         <Text style={styles.renewalNote}>{t('paywall.renewalNote')}</Text>
@@ -143,6 +173,11 @@ export default function PaywallScreen() {
           ) : (
             <Text style={styles.restoreText}>{t('paywall.restore')}</Text>
           )}
+        </TouchableOpacity>
+
+        {/* Free option */}
+        <TouchableOpacity onPress={handleContinueFree} style={styles.freeBtn} activeOpacity={0.7}>
+          <Text style={styles.freeText}>{t('paywall.ctaFree')}</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -161,7 +196,6 @@ const styles = StyleSheet.create({
 
   scroll: { padding: 24, paddingTop: 48, paddingBottom: 40 },
 
-  // Hero
   hero: { alignItems: 'center', marginBottom: 32 },
   heroEmoji: { fontSize: 64, marginBottom: 16 },
   heroTitle: {
@@ -170,7 +204,6 @@ const styles = StyleSheet.create({
   },
   heroSubtitle: { fontSize: 15, color: '#999', textAlign: 'center' },
 
-  // Feature table
   featureCard: {
     backgroundColor: '#FFF', borderRadius: 20,
     overflow: 'hidden', marginBottom: 28,
@@ -183,12 +216,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8F8F8',
     borderBottomWidth: 1, borderBottomColor: '#EEEEEE',
   },
-  featureColHeader: {
-    fontSize: 10, fontWeight: '700', color: '#999', letterSpacing: 0.5,
-  },
+  featureColHeader: { fontSize: 10, fontWeight: '700', color: '#999', letterSpacing: 0.5 },
   featureColCenter: { width: 60, textAlign: 'center' },
   featureColPremiumHeader: { color: '#FF6B35' },
-
   featureRow: {
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: 16, paddingVertical: 13,
@@ -198,46 +228,56 @@ const styles = StyleSheet.create({
   featureName: { flex: 1, fontSize: 14, color: '#1A1A1A', fontWeight: '500' },
   featureCheck: { width: 60, textAlign: 'center', fontSize: 16 },
 
-  // Pricing
-  pricingTitle: {
-    fontSize: 17, fontWeight: '700', color: '#1A1A1A', marginBottom: 14,
-  },
-  pricingRow: { flexDirection: 'row', gap: 12, marginBottom: 24 },
+  pricingTitle: { fontSize: 17, fontWeight: '700', color: '#1A1A1A', marginBottom: 14 },
+  pricingRow: { flexDirection: 'row', gap: 12, marginBottom: 20 },
 
-  priceCard: {
+  weeklyCard: {
     flex: 1, borderRadius: 18, borderWidth: 2, borderColor: '#E0E0E0',
-    padding: 16, alignItems: 'center', backgroundColor: '#FFF',
-    minHeight: 110,
+    padding: 16, alignItems: 'center', backgroundColor: '#FFF', minHeight: 110,
+    justifyContent: 'center',
   },
-  priceCardSelected: { borderColor: '#FF6B35', backgroundColor: 'rgba(255,107,53,0.04)' },
-  priceCardAnnual: { position: 'relative' },
-
-  savingsBadge: {
+  annualCard: {
+    flex: 1.3, borderRadius: 18, borderWidth: 2.5, borderColor: '#FF6B35',
+    padding: 16, alignItems: 'center', backgroundColor: 'rgba(255,107,53,0.04)',
+    minHeight: 110, justifyContent: 'center',
+  },
+  badgeRow: { flexDirection: 'row', gap: 6, marginBottom: 8 },
+  freeBadge: {
     backgroundColor: '#4ECDC4', borderRadius: 20,
-    paddingHorizontal: 10, paddingVertical: 4, marginBottom: 8,
+    paddingHorizontal: 8, paddingVertical: 3,
   },
-  savingsText: { color: '#FFF', fontSize: 10, fontWeight: '800', letterSpacing: 0.3 },
+  savingsBadge: {
+    backgroundColor: '#FF6B35', borderRadius: 20,
+    paddingHorizontal: 8, paddingVertical: 3,
+  },
+  badgeText: { color: '#FFF', fontSize: 9, fontWeight: '800', letterSpacing: 0.3 },
+  priceLabel: { fontSize: 13, fontWeight: '600', color: '#666', marginBottom: 4 },
+  priceAmount: { fontSize: 18, fontWeight: '800', color: '#1A1A1A' },
+  priceBilled: { fontSize: 11, color: '#999', marginTop: 3 },
 
-  priceLabel: { fontSize: 13, fontWeight: '600', color: '#666', marginBottom: 6 },
-  priceAmount: { fontSize: 20, fontWeight: '800', color: '#1A1A1A' },
-  perMonth: { fontSize: 12, color: '#999', marginTop: 4 },
-
-  // CTA
-  ctaBtn: {
+  ctaBtnPrimary: {
     backgroundColor: '#FF6B35', borderRadius: 18, height: 58,
-    alignItems: 'center', justifyContent: 'center', marginBottom: 12,
+    alignItems: 'center', justifyContent: 'center', marginBottom: 10,
     shadowColor: '#FF6B35', shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35, shadowRadius: 10, elevation: 5,
   },
-  ctaText: { color: '#FFF', fontSize: 17, fontWeight: '800' },
+  ctaTextPrimary: { color: '#FFF', fontSize: 17, fontWeight: '800' },
 
-  renewalNote: {
-    fontSize: 12, color: '#999', textAlign: 'center', marginBottom: 20,
+  ctaBtnSecondary: {
+    borderWidth: 2, borderColor: '#4ECDC4', borderRadius: 18, height: 52,
+    alignItems: 'center', justifyContent: 'center', marginBottom: 12,
+    backgroundColor: '#FFF',
   },
+  ctaTextSecondary: { color: '#4ECDC4', fontSize: 16, fontWeight: '700' },
 
-  restoreBtn: { alignItems: 'center', paddingVertical: 12 },
+  renewalNote: { fontSize: 12, color: '#999', textAlign: 'center', marginBottom: 16 },
+
+  restoreBtn: { alignItems: 'center', paddingVertical: 10 },
   restoreText: {
     fontSize: 14, color: '#999',
     textDecorationLine: 'underline', textDecorationColor: '#CCC',
   },
+
+  freeBtn: { alignItems: 'center', paddingVertical: 12, marginTop: 4 },
+  freeText: { fontSize: 13, color: '#BBBBBB' },
 });

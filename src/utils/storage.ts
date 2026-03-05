@@ -6,6 +6,7 @@ const KEYS = {
   FAVORITES: 'fridge_chef_favorites',
   SHOPPING_LIST: 'fridge_chef_shopping_list',
   CACHED_RECIPES: 'fridge_chef_cached_recipes',
+  ONBOARDING: 'fridge_chef_onboarding',
 };
 
 export async function loadPantry(): Promise<string[]> {
@@ -65,6 +66,27 @@ export async function loadCachedRecipes(): Promise<{ [key: string]: Recipe[] }> 
 export async function saveCachedRecipes(cache: { [key: string]: Recipe[] }): Promise<void> {
   try {
     await AsyncStorage.setItem(KEYS.CACHED_RECIPES, JSON.stringify(cache));
+  } catch {}
+}
+
+export interface OnboardingPrefs {
+  completed: boolean;
+  servings: number;
+  cuisineTypes: string[];
+}
+
+export async function loadOnboardingPrefs(): Promise<OnboardingPrefs> {
+  try {
+    const data = await AsyncStorage.getItem(KEYS.ONBOARDING);
+    return data ? JSON.parse(data) : { completed: false, servings: 2, cuisineTypes: [] };
+  } catch {
+    return { completed: false, servings: 2, cuisineTypes: [] };
+  }
+}
+
+export async function saveOnboardingPrefs(prefs: OnboardingPrefs): Promise<void> {
+  try {
+    await AsyncStorage.setItem(KEYS.ONBOARDING, JSON.stringify(prefs));
   } catch {}
 }
 

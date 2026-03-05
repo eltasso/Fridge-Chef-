@@ -54,6 +54,10 @@ interface GenerateParams {
   preference: Preference;
   difficulty: Difficulty | null;
   dietary: DietaryTag[];
+  language?: string;
+  servings?: number;
+  cuisineTypes?: string[];
+  maxTime?: number | null;
 }
 
 export async function generateRecipes(params: GenerateParams): Promise<Recipe[]> {
@@ -63,11 +67,21 @@ export async function generateRecipes(params: GenerateParams): Promise<Recipe[]>
 
   const dietaryStr = params.dietary.length > 0 ? params.dietary.join(', ') : 'none';
   const difficultyStr = params.difficulty ?? 'any difficulty';
+  const servings = params.servings ?? 2;
+  const cuisine = params.cuisineTypes && params.cuisineTypes.length > 0 && !params.cuisineTypes.includes('everything')
+    ? params.cuisineTypes.join(', ')
+    : 'any';
+  const maxTime = params.maxTime ? `${params.maxTime} minutes` : 'no limit';
+  const lang = params.language ?? 'en';
+  const langInstruction = lang === 'es'
+    ? 'Respond entirely in Spanish. All recipe names, descriptions, ingredients, and steps must be in Spanish.'
+    : 'Respond entirely in English.';
 
-  const prompt = `You are a creative chef assistant. Generate 3-5 recipes based on these parameters:
+  const prompt = `You are a creative chef assistant. ${langInstruction}
+
+Generate 3-5 ${cuisine !== 'any' ? cuisine : ''} recipes for ${params.mealTime} that serve ${servings} people and take no more than ${maxTime}.
 
 Ingredients available: ${params.ingredients.join(', ')}
-Meal time: ${params.mealTime}
 Preference: ${params.preference}
 Difficulty: ${difficultyStr}
 Dietary restrictions: ${dietaryStr}
@@ -79,7 +93,7 @@ Return ONLY a valid JSON array of recipe objects. Each recipe must follow this e
   "prepTime": 10,
   "cookTime": 20,
   "difficulty": "easy",
-  "servings": 4,
+  "servings": ${servings},
   "ingredients": [
     { "name": "ingredient name", "amount": "1 cup" }
   ],
@@ -137,7 +151,7 @@ Rules:
     difficulty: (r.difficulty as Difficulty) ?? 'easy',
     prepTime: Number(r.prepTime) || 10,
     cookTime: Number(r.cookTime) || 15,
-    servings: Number(r.servings) || 2,
+    servings: Number(r.servings) || servings,
     ingredients: Array.isArray(r.ingredients) ? r.ingredients : [],
     steps: Array.isArray(r.steps) ? r.steps : [],
     tags: Array.isArray(r.tags) ? r.tags : [],

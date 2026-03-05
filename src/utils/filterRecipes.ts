@@ -70,16 +70,63 @@ export function scaleIngredients(
   }));
 }
 
+// Units that are countable — always round UP to nearest whole number
+const COUNTABLE_UNITS = new Set([
+  'egg', 'eggs',
+  'clove', 'cloves',
+  'tortilla', 'tortillas',
+  'slice', 'slices',
+  'piece', 'pieces',
+  'strip', 'strips',
+  'fillet', 'fillets',
+  'sheet', 'sheets',
+  'breast', 'breasts',
+  'thigh', 'thighs',
+  'drumstick', 'drumsticks',
+]);
+
+function isCountableUnit(unit: string): boolean {
+  const u = unit.trim().toLowerCase();
+  if (u === '') return true; // bare number, e.g. "2"
+  return COUNTABLE_UNITS.has(u) || [...COUNTABLE_UNITS].some((c) => u.startsWith(c + ' '));
+}
+
+const FRACTION_MAP: [number, string][] = [
+  [1 / 4, '¼'],
+  [1 / 3, '⅓'],
+  [1 / 2, '½'],
+  [2 / 3, '⅔'],
+  [3 / 4, '¾'],
+];
+
+function formatWithFractions(num: number): string {
+  if (num <= 0) return '0';
+  const whole = Math.floor(num);
+  const decimal = num - whole;
+
+  if (decimal < 0.05) return whole.toString();
+
+  for (const [value, symbol] of FRACTION_MAP) {
+    if (Math.abs(decimal - value) < 0.07) {
+      return whole > 0 ? `${whole}${symbol}` : symbol;
+    }
+  }
+
+  // Fallback to 1 decimal place
+  return num.toFixed(1);
+}
+
 function scaleAmount(amount: string, ratio: number): string {
   const match = amount.match(/^([\d.\/]+)\s*(.*)$/);
   if (!match) return amount;
 
-  const [, numStr, unit] = match;
+  const [, numStr, unitRaw] = match;
+  const unit = unitRaw.trim();
   let num: number;
 
   if (numStr.includes('/')) {
-    const parts = numStr.split('/');
-    num = parseFloat(parts[0]) / parseFloat(parts[1]);
+    const [num1, num2] = numStr.split('/');
+    num = parseFloat(num1) / parseFloat(num2);
   } else {
     num = parseFloat(numStr);
   }
@@ -87,6 +134,13 @@ function scaleAmount(amount: string, ratio: number): string {
   if (isNaN(num)) return amount;
 
   const scaled = num * ratio;
-  const formatted = scaled % 1 === 0 ? scaled.toString() : scaled.toFixed(1);
+
+  if (isCountableUnit(unit)) {
+    // Always round up for countable items
+    const rounded = Math.ceil(scaled);
+    return unit ? `${rounded} ${unit}` : `${rounded}`;
+  }
+
+  const formatted = formatWithFractions(scaled);
   return unit ? `${formatted} ${unit}` : formatted;
 }

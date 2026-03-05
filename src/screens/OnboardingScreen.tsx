@@ -8,7 +8,7 @@ import { useApp } from '../context/AppContext';
 import { useTranslation } from '../context/LanguageContext';
 import { MealTime, Preference, RootStackParamList } from '../types';
 
-type Nav = StackNavigationProp<RootStackParamList, 'Onboarding'>;
+type Nav = StackNavigationProp<RootStackParamList, 'Ingredients'>;
 
 export default function OnboardingScreen() {
   const navigation = useNavigation<Nav>();

@@ -265,11 +265,19 @@ export default function IngredientsScreen() {
       {/* CTA Button */}
       <View style={styles.ctaContainer}>
         <TouchableOpacity
-          onPress={() => navigation.navigate('RecipeList')}
+          onPress={() => {
+            if (state.onboardingCompleted) {
+              navigation.navigate('RecipeList');
+            } else {
+              navigation.navigate('MealStep');
+            }
+          }}
           activeOpacity={0.85}
           style={styles.cta}
         >
-          <Text style={styles.ctaText}>{t('ingredients.cta')}</Text>
+          <Text style={styles.ctaText}>
+            {state.onboardingCompleted ? t('ingredients.ctaDirect') : t('ingredients.cta')}
+          </Text>
         </TouchableOpacity>
       </View>
 
