@@ -7,6 +7,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation, useLanguage } from '../context/LanguageContext';
 import { useApp } from '../context/AppContext';
+import { useSubscription } from '../context/SubscriptionContext';
 
 const APP_VERSION = '1.0.0';
 
@@ -15,6 +16,7 @@ export default function ProfileScreen() {
   const { t } = useTranslation();
   const { language, setLanguage } = useLanguage();
   const { state } = useApp();
+  const { isPremium } = useSubscription();
   const navigation = useNavigation<any>();
 
   const favCount = state.favorites.length;
@@ -82,6 +84,29 @@ export default function ProfileScreen() {
             )}
           </View>
         </View>
+
+        {/* Premium section */}
+        {isPremium ? (
+          <View style={styles.premiumBadgeCard}>
+            <Text style={styles.premiumBadgeIcon}>✨</Text>
+            <View>
+              <Text style={styles.premiumBadgeTitle}>{t('subscription.premium')}</Text>
+              <Text style={styles.premiumBadgeStatus}>{t('subscription.premiumActive')}</Text>
+            </View>
+          </View>
+        ) : (
+          <TouchableOpacity
+            style={styles.upgradeCard}
+            onPress={() => navigation.navigate('Paywall')}
+            activeOpacity={0.85}
+          >
+            <View style={styles.upgradeLeft}>
+              <Text style={styles.upgradeTitle}>{t('subscription.upgrade')}</Text>
+              <Text style={styles.upgradeSubtitle}>{t('subscription.upgradeSubtitle')}</Text>
+            </View>
+            <Text style={styles.upgradeArrow}>›</Text>
+          </TouchableOpacity>
+        )}
 
         {/* Language */}
         <View style={styles.section}>
@@ -315,4 +340,36 @@ const styles = StyleSheet.create({
     color: '#CCC',
     marginTop: 8,
   },
+
+  // Premium section
+  upgradeCard: {
+    backgroundColor: '#FF6B35',
+    borderRadius: 20,
+    padding: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 24,
+    shadowColor: '#FF6B35',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  upgradeLeft: { flex: 1 },
+  upgradeTitle: { fontSize: 18, fontWeight: '800', color: '#FFF', marginBottom: 2 },
+  upgradeSubtitle: { fontSize: 13, color: 'rgba(255,255,255,0.8)' },
+  upgradeArrow: { fontSize: 28, color: '#FFF', fontWeight: '300' },
+
+  premiumBadgeCard: {
+    backgroundColor: '#FFF0EB',
+    borderRadius: 20,
+    padding: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    marginBottom: 24,
+  },
+  premiumBadgeIcon: { fontSize: 32 },
+  premiumBadgeTitle: { fontSize: 18, fontWeight: '800', color: '#FF6B35' },
+  premiumBadgeStatus: { fontSize: 13, color: '#FF9066', marginTop: 2 },
 });

@@ -83,6 +83,7 @@ export type AppStackParamList = {
   Main: undefined;
   PrivacyPolicy: undefined;
   Terms: undefined;
+  Paywall: undefined;
 };
 
 export type RootStackParamList = {

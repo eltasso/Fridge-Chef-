@@ -10,6 +10,7 @@ import { Text, View, ActivityIndicator, StyleSheet } from 'react-native';
 import { AppProvider, useApp } from './src/context/AppContext';
 import { LanguageProvider, useTranslation } from './src/context/LanguageContext';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
+import { SubscriptionProvider } from './src/context/SubscriptionContext';
 import { AppStackParamList, RootStackParamList, TabParamList } from './src/types';
 import { colors } from './src/styles/theme';
 
@@ -23,6 +24,7 @@ import ShoppingListScreen from './src/screens/ShoppingListScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import PrivacyPolicyScreen from './src/screens/PrivacyPolicyScreen';
 import TermsScreen from './src/screens/TermsScreen';
+import PaywallScreen from './src/screens/PaywallScreen';
 
 const AppStack = createStackNavigator<AppStackParamList>();
 const Stack = createStackNavigator<RootStackParamList>();
@@ -145,12 +147,14 @@ function RootNavigator() {
             <AppStack.Screen name="Main" component={MainTabs} />
             <AppStack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
             <AppStack.Screen name="Terms" component={TermsScreen} />
+            <AppStack.Screen name="Paywall" component={PaywallScreen} />
           </>
         ) : (
           <>
             <AppStack.Screen name="Welcome" component={WelcomeScreen} />
             <AppStack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
             <AppStack.Screen name="Terms" component={TermsScreen} />
+            <AppStack.Screen name="Paywall" component={PaywallScreen} />
           </>
         )}
       </AppStack.Navigator>
@@ -164,9 +168,11 @@ export default function App() {
       <SafeAreaProvider>
         <LanguageProvider>
           <AuthProvider>
-            <AppProvider>
-              <RootNavigator />
-            </AppProvider>
+            <SubscriptionProvider>
+              <AppProvider>
+                <RootNavigator />
+              </AppProvider>
+            </SubscriptionProvider>
           </AuthProvider>
         </LanguageProvider>
       </SafeAreaProvider>

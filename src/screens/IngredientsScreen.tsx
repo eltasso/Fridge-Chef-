@@ -7,6 +7,7 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useApp } from '../context/AppContext';
 import { useTranslation } from '../context/LanguageContext';
+import { useSubscription } from '../context/SubscriptionContext';
 import { Difficulty, DietaryTag, RootStackParamList } from '../types';
 import { scanIngredients } from '../services/openai';
 
@@ -43,6 +44,7 @@ export default function IngredientsScreen() {
   const navigation = useNavigation<Nav>();
   const { state, addIngredient, removeIngredient, setFilters } = useApp();
   const { t, language } = useTranslation();
+  const { isPremium } = useSubscription();
   const [inputValue, setInputValue] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [scanning, setScanning] = useState(false);
@@ -79,6 +81,10 @@ export default function IngredientsScreen() {
   };
 
   const handleScan = async () => {
+    if (!isPremium) {
+      (navigation as any).navigate('Paywall');
+      return;
+    }
     if (Platform.OS === 'web') {
       Alert.alert(t('ingredients.scan'), t('camera.mobileOnly'));
       return;

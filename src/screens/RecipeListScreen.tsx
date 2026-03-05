@@ -7,6 +7,7 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useApp } from '../context/AppContext';
 import { useTranslation } from '../context/LanguageContext';
+import { useSubscription } from '../context/SubscriptionContext';
 import { Recipe, RootStackParamList, getLocalizedName, getLocalizedDescription } from '../types';
 import { LOCAL_RECIPES } from '../data/recipes';
 import { generateRecipes } from '../services/openai';
@@ -74,6 +75,7 @@ export default function RecipeListScreen() {
   const navigation = useNavigation<Nav>();
   const { state, toggleFavorite, isFavorite, setCachedRecipes, getCacheKey } = useApp();
   const { t, language } = useTranslation();
+  const { isPremium, aiGenerationsLeft, decrementAICount } = useSubscription();
   const [aiRecipes, setAiRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
@@ -103,10 +105,15 @@ export default function RecipeListScreen() {
   const handleGenerateAI = useCallback(async () => {
     if (!state.mealTime || !state.preference) return;
 
+    if (!isPremium && aiGenerationsLeft <= 0) {
+      (navigation as any).navigate('Paywall');
+      return;
+    }
+
     if (cached.length > 0 && aiRecipes.length === 0) {
       setAiRecipes(cached);
       setActiveTab('ai');
-      return;
+      return; // showing cached — no API call, don't decrement
     }
 
     setLoading(true);
@@ -121,6 +128,7 @@ export default function RecipeListScreen() {
       setAiRecipes(recipes);
       setCachedRecipes(cacheKey, recipes);
       setActiveTab('ai');
+      if (!isPremium) decrementAICount();
     } catch (error: any) {
       Alert.alert(
         t('recipeList.aiGeneratedFailed'),
@@ -132,10 +140,16 @@ export default function RecipeListScreen() {
     } finally {
       setLoading(false);
     }
-  }, [state, cacheKey, cached, aiRecipes, t]);
+  }, [state, cacheKey, cached, aiRecipes, t, isPremium, aiGenerationsLeft, decrementAICount]);
 
   const handleRegenerate = useCallback(async () => {
     if (!state.mealTime || !state.preference) return;
+
+    if (!isPremium && aiGenerationsLeft <= 0) {
+      (navigation as any).navigate('Paywall');
+      return;
+    }
+
     setLoading(true);
     setAiRecipes([]);
     try {
@@ -148,12 +162,13 @@ export default function RecipeListScreen() {
       });
       setAiRecipes(recipes);
       setCachedRecipes(cacheKey, recipes);
+      if (!isPremium) decrementAICount();
     } catch {
       Alert.alert(t('common.error'), t('recipeList.regenError'));
     } finally {
       setLoading(false);
     }
-  }, [state, cacheKey, t]);
+  }, [state, cacheKey, t, isPremium, aiGenerationsLeft, decrementAICount]);
 
   const ingredientSummary = state.sessionIngredients.slice(0, 4).join(', ') +
     (state.sessionIngredients.length > 4
@@ -230,6 +245,11 @@ export default function RecipeListScreen() {
         )}
       </TouchableOpacity>
       <Text style={styles.aiHint}>{t('recipeList.hint')}</Text>
+      {!isPremium && aiGenerationsLeft > 0 && (
+        <Text style={styles.aiCountNote}>
+          {aiGenerationsLeft} {t('recipeList.freeGensLeft')}
+        </Text>
+      )}
     </View>
   );
 
@@ -322,4 +342,5 @@ const styles = StyleSheet.create({
   },
   aiBtnText: { color: '#FFF', fontWeight: '700', fontSize: 17 },
   aiHint: { fontSize: 12, color: '#999', textAlign: 'center' },
+  aiCountNote: { fontSize: 12, color: '#4ECDC4', textAlign: 'center', fontWeight: '600' },
 });
