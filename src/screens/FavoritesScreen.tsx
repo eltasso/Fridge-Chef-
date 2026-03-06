@@ -1,12 +1,13 @@
 import React from 'react';
 import {
   View, Text, StyleSheet, FlatList, SafeAreaView, TouchableOpacity,
-  Dimensions,
+  Dimensions, Image,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useApp } from '../context/AppContext';
 import { useTranslation } from '../context/LanguageContext';
 import { Recipe, getLocalizedName } from '../types';
+import { getRecipeImage } from '../utils/recipeImages';
 
 const { width } = Dimensions.get('window');
 const CARD_SIZE = (width - 48 - 12) / 2;
@@ -26,8 +27,8 @@ function FavCard({
   const localName = getLocalizedName(recipe, language);
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.85}>
-      <View style={styles.cardImage}>
-        <Text style={styles.cardImageEmoji}>🍽️</Text>
+      <View style={styles.cardImageWrapper}>
+        <Image source={{ uri: getRecipeImage(recipe) }} style={styles.cardImage} resizeMode="cover" />
         <TouchableOpacity onPress={onUnfavorite} style={styles.heartBadge}>
           <Text style={styles.heartBadgeIcon}>♥</Text>
         </TouchableOpacity>
@@ -129,13 +130,13 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 2,
   },
-  cardImage: {
+  cardImageWrapper: {
     width: '100%', height: 150,
-    backgroundColor: '#FFF0EB',
-    alignItems: 'center', justifyContent: 'center',
     position: 'relative',
   },
-  cardImageEmoji: { fontSize: 48 },
+  cardImage: {
+    width: '100%', height: 150,
+  },
   heartBadge: {
     position: 'absolute', top: 8, right: 8,
     width: 30, height: 30, borderRadius: 15,
@@ -154,7 +155,7 @@ const styles = StyleSheet.create({
   emptyTitle: { fontSize: 22, fontWeight: '700', color: '#1A1A1A', marginBottom: 8 },
   emptySubtitle: { fontSize: 15, color: '#999', textAlign: 'center', marginBottom: 24, lineHeight: 22 },
   emptyBtn: {
-    backgroundColor: '#4ECDC4', borderRadius: 16, height: 52,
+    backgroundColor: '#FF6B35', borderRadius: 16, height: 52,
     paddingHorizontal: 32, alignItems: 'center', justifyContent: 'center',
   },
   emptyBtnText: { color: '#FFF', fontSize: 15, fontWeight: '700' },

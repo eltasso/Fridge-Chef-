@@ -14,6 +14,7 @@ import {
 } from '../types';
 import { getMissingIngredients, scaleIngredients } from '../utils/filterRecipes';
 import { shareRecipe } from '../utils/share';
+import { getRecipeImage } from '../utils/recipeImages';
 
 type Route = RouteProp<RootStackParamList, 'RecipeDetail'>;
 
@@ -297,13 +298,7 @@ export default function RecipeDetailScreen() {
     <View style={styles.root}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         <View style={styles.imageContainer}>
-          {recipe.imageUrl ? (
-            <Image source={{ uri: recipe.imageUrl }} style={styles.image} resizeMode="cover" />
-          ) : (
-            <View style={styles.imagePlaceholder}>
-              <Text style={styles.imagePlaceholderEmoji}>🍽️</Text>
-            </View>
-          )}
+          <Image source={{ uri: getRecipeImage(recipe) }} style={styles.image} resizeMode="cover" />
           <SafeAreaView style={styles.imageOverlay}>
             <TouchableOpacity onPress={() => navigation.goBack()} style={styles.overlayCircle}>
               <Text style={styles.overlayBack}>←</Text>
@@ -323,10 +318,6 @@ export default function RecipeDetailScreen() {
             </View>
           )}
           <Text style={styles.recipeName}>{localName}</Text>
-          <View style={styles.starsRow}>
-            <Text style={styles.stars}>⭐⭐⭐⭐</Text>
-            <Text style={styles.starsCount}>(128 {t('recipeDetail.reviews')})</Text>
-          </View>
           <View style={styles.infoPills}>
             <View style={styles.pill}>
               <Text style={styles.pillText}>
@@ -383,7 +374,9 @@ export default function RecipeDetailScreen() {
           </Text>
           {displaySteps.map((step, i) => (
             <View key={i} style={styles.stepRow}>
-              <Text style={styles.stepNum}>{i + 1}</Text>
+              <View style={styles.stepNum}>
+                <Text style={styles.stepNumText}>{i + 1}</Text>
+              </View>
               <Text style={styles.stepText}>{step}</Text>
             </View>
           ))}
@@ -408,11 +401,6 @@ const styles = StyleSheet.create({
 
   imageContainer: { height: 280, position: 'relative' },
   image: { width: '100%', height: '100%' },
-  imagePlaceholder: {
-    width: '100%', height: '100%', backgroundColor: '#FFF0EB',
-    alignItems: 'center', justifyContent: 'center',
-  },
-  imagePlaceholderEmoji: { fontSize: 80 },
   imageOverlay: {
     position: 'absolute', top: 0, left: 0, right: 0,
     flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 16,
@@ -438,10 +426,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12, paddingVertical: 4, marginBottom: 10,
   },
   aiTagText: { color: '#FF6B35', fontSize: 12, fontWeight: '700' },
-  recipeName: { fontSize: 26, fontWeight: '800', color: '#1A1A1A', marginBottom: 8 },
-  starsRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 16 },
-  stars: { fontSize: 14 },
-  starsCount: { fontSize: 13, color: '#999' },
+  recipeName: { fontSize: 26, fontWeight: '800', color: '#1A1A1A', marginBottom: 16 },
   infoPills: { flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginBottom: 20 },
   pill: {
     backgroundColor: '#F0F0F0', borderRadius: 12,
@@ -483,7 +468,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#FCE4EC', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2,
   },
   stepRow: { flexDirection: 'row', gap: 14, marginBottom: 20, alignItems: 'flex-start' },
-  stepNum: { fontSize: 20, fontWeight: '700', color: '#FF6B35', width: 28 },
+  stepNum: {
+    width: 32, height: 32, borderRadius: 16,
+    backgroundColor: '#FF6B35', alignItems: 'center', justifyContent: 'center',
+    flexShrink: 0, marginTop: 2,
+  },
+  stepNumText: { fontSize: 14, fontWeight: '800', color: '#FFF' },
   stepText: { flex: 1, fontSize: 15, color: '#444', lineHeight: 24 },
   bottomBar: {
     position: 'absolute', bottom: 0, left: 0, right: 0,

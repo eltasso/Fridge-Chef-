@@ -73,25 +73,35 @@ export default function IngredientsScreen() {
           <Text style={styles.subtitle}>{t('ingredients.subtitle')}</Text>
         </View>
 
-        {/* Camera — hero card */}
-        <TouchableOpacity
-          style={styles.cameraCard}
-          onPress={handleScan}
-          disabled={scanning}
-          activeOpacity={0.85}
-        >
-          <View style={styles.cameraInner}>
+        {/* Action cards — side by side */}
+        <View style={styles.actionRow}>
+          <TouchableOpacity
+            style={[styles.actionCard, styles.actionCardPrimary]}
+            onPress={handleScan}
+            disabled={scanning}
+            activeOpacity={0.85}
+          >
             {scanning ? (
-              <ActivityIndicator color="#FF6B35" size="large" />
+              <ActivityIndicator color="#FF6B35" size="small" />
             ) : (
-              <Text style={styles.cameraEmoji}>📷</Text>
+              <Text style={styles.actionEmoji}>📷</Text>
             )}
-            <Text style={styles.cameraTitle}>
+            <Text style={styles.actionTitlePrimary}>
               {scanning ? t('ingredients.scanning') : t('ingredients.scan')}
             </Text>
-            <Text style={styles.cameraSub}>{t('ingredients.scanSub')}</Text>
-          </View>
-        </TouchableOpacity>
+            <Text style={styles.actionSubPrimary}>{t('ingredients.scanSub')}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.actionCard, styles.actionCardSecondary]}
+            onPress={() => navigation.navigate('ManualIngredients')}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.actionEmoji}>✏️</Text>
+            <Text style={styles.actionTitleSecondary}>{t('ingredients.typeManually')}</Text>
+            <Text style={styles.actionSubSecondary}>{t('ingredients.typeManuallyDesc')}</Text>
+          </TouchableOpacity>
+        </View>
 
         {/* Added ingredients chips */}
         {hasIngredients && (
@@ -109,20 +119,6 @@ export default function IngredientsScreen() {
             </View>
           </View>
         )}
-
-        {/* Write manually — secondary */}
-        <TouchableOpacity
-          style={styles.manualBtn}
-          onPress={() => navigation.navigate('ManualIngredients')}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.manualEmoji}>✏️</Text>
-          <View style={styles.manualTextWrap}>
-            <Text style={styles.manualTitle}>{t('ingredients.typeManually')}</Text>
-            <Text style={styles.manualDesc}>{t('ingredients.typeManuallyDesc')}</Text>
-          </View>
-          <Text style={styles.manualArrow}>›</Text>
-        </TouchableOpacity>
       </ScrollView>
 
       {/* CTA */}
@@ -155,19 +151,28 @@ const styles = StyleSheet.create({
   title: { fontSize: 28, fontWeight: '800', color: '#1A1A1A', marginBottom: 6 },
   subtitle: { fontSize: 15, color: '#999' },
 
-  cameraCard: {
-    borderRadius: 24, borderWidth: 2.5, borderColor: '#FF6B35',
-    backgroundColor: 'rgba(255,107,53,0.04)',
-    marginBottom: 20, overflow: 'hidden',
-    shadowColor: '#FF6B35', shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15, shadowRadius: 12, elevation: 4,
+  actionRow: {
+    flexDirection: 'row', gap: 12, marginBottom: 20,
   },
-  cameraInner: {
-    paddingVertical: 48, alignItems: 'center', gap: 10,
+  actionCard: {
+    flex: 1, borderRadius: 20, padding: 18,
+    alignItems: 'center', gap: 6,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.07, shadowRadius: 8, elevation: 3,
   },
-  cameraEmoji: { fontSize: 56 },
-  cameraTitle: { fontSize: 20, fontWeight: '800', color: '#FF6B35' },
-  cameraSub: { fontSize: 14, color: '#FF6B35', opacity: 0.7 },
+  actionCardPrimary: {
+    borderWidth: 2, borderColor: '#FF6B35',
+    backgroundColor: 'rgba(255,107,53,0.05)',
+  },
+  actionCardSecondary: {
+    backgroundColor: '#FFF',
+    borderWidth: 1.5, borderColor: '#EEEEEE',
+  },
+  actionEmoji: { fontSize: 32 },
+  actionTitlePrimary: { fontSize: 14, fontWeight: '800', color: '#FF6B35', textAlign: 'center' },
+  actionSubPrimary: { fontSize: 11, color: '#FF6B35', opacity: 0.7, textAlign: 'center' },
+  actionTitleSecondary: { fontSize: 14, fontWeight: '700', color: '#1A1A1A', textAlign: 'center' },
+  actionSubSecondary: { fontSize: 11, color: '#999', textAlign: 'center' },
 
   addedSection: { marginBottom: 20 },
   sectionLabel: {
@@ -182,20 +187,6 @@ const styles = StyleSheet.create({
   },
   chipText: { color: '#fff', fontSize: 14, fontWeight: '500' },
   chipRemove: { color: '#fff', fontSize: 18, fontWeight: '700', lineHeight: 20 },
-
-  manualBtn: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#FFFFFF', borderRadius: 18,
-    borderWidth: 1.5, borderColor: '#EEEEEE',
-    padding: 18, gap: 14,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05, shadowRadius: 6, elevation: 2,
-  },
-  manualEmoji: { fontSize: 26 },
-  manualTextWrap: { flex: 1 },
-  manualTitle: { fontSize: 16, fontWeight: '700', color: '#1A1A1A' },
-  manualDesc: { fontSize: 13, color: '#999', marginTop: 2 },
-  manualArrow: { fontSize: 24, color: '#CCC', fontWeight: '300' },
 
   ctaContainer: {
     position: 'absolute', bottom: 0, left: 0, right: 0,

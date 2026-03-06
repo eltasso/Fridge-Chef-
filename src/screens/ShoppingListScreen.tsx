@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   View, Text, StyleSheet, FlatList, SafeAreaView,
-  TouchableOpacity, Alert,
+  TouchableOpacity, Alert, Platform,
 } from 'react-native';
 import { useApp } from '../context/AppContext';
 import { useTranslation } from '../context/LanguageContext';
@@ -17,6 +17,10 @@ export default function ShoppingListScreen() {
 
   const handleClear = () => {
     if (state.shoppingList.length === 0) return;
+    if (Platform.OS === 'web') {
+      if (window.confirm(t('shopping.clearMsg'))) clearShoppingList();
+      return;
+    }
     Alert.alert(t('shopping.clearTitle'), t('shopping.clearMsg'), [
       { text: t('shopping.cancel'), style: 'cancel' },
       { text: t('shopping.clear'), style: 'destructive', onPress: clearShoppingList },
@@ -182,9 +186,9 @@ const styles = StyleSheet.create({
   },
   shareBtn: {
     flex: 1, height: 52, borderRadius: 16,
-    borderWidth: 2, borderColor: '#4ECDC4',
+    borderWidth: 2, borderColor: '#FF6B35',
     alignItems: 'center', justifyContent: 'center',
   },
-  shareBtnText: { color: '#4ECDC4', fontWeight: '700', fontSize: 15 },
+  shareBtnText: { color: '#FF6B35', fontWeight: '700', fontSize: 15 },
   clearText: { color: '#E85D4C', fontWeight: '600', fontSize: 15, paddingHorizontal: 8 },
 });

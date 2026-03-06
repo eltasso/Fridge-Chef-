@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, SafeAreaView,
-  TouchableOpacity, ActivityIndicator, Alert, ScrollView,
+  TouchableOpacity, ActivityIndicator, Alert, ScrollView, Image,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -12,6 +12,7 @@ import { Recipe, RootStackParamList, getLocalizedName, getLocalizedDescription }
 import { LOCAL_RECIPES } from '../data/recipes';
 import { generateRecipes } from '../services/openai';
 import { filterRecipes } from '../utils/filterRecipes';
+import { getRecipeImage } from '../utils/recipeImages';
 
 type Nav = StackNavigationProp<RootStackParamList, 'RecipeList'>;
 
@@ -44,9 +45,7 @@ function RecipeRow({
 
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.85}>
-      <View style={styles.cardImagePlaceholder}>
-        <Text style={styles.cardImageEmoji}>🍽️</Text>
-      </View>
+      <Image source={{ uri: getRecipeImage(recipe) }} style={styles.cardImage} resizeMode="cover" />
       <View style={styles.cardContent}>
         <Text style={styles.cardName} numberOfLines={2}>{localName}</Text>
         <View style={styles.cardMeta}>
@@ -103,7 +102,7 @@ export default function RecipeListScreen() {
   });
 
   const handleGenerateAI = useCallback(async () => {
-    if (!state.mealTime || !state.preference) return;
+    if (!state.mealTime) return;
 
     if (!isPremium && aiGenerationsLeft <= 0) {
       (navigation as any).navigate('Paywall');
@@ -121,7 +120,7 @@ export default function RecipeListScreen() {
       const recipes = await generateRecipes({
         ingredients: state.sessionIngredients,
         mealTime: state.mealTime,
-        preference: state.preference,
+        preference: state.preference ?? 'savory',
         difficulty: state.filters.difficulty,
         dietary: state.filters.dietary,
         language,
@@ -147,7 +146,7 @@ export default function RecipeListScreen() {
   }, [state, cacheKey, cached, aiRecipes, t, isPremium, aiGenerationsLeft, decrementAICount]);
 
   const handleRegenerate = useCallback(async () => {
-    if (!state.mealTime || !state.preference) return;
+    if (!state.mealTime) return;
 
     if (!isPremium && aiGenerationsLeft <= 0) {
       (navigation as any).navigate('Paywall');
@@ -160,7 +159,7 @@ export default function RecipeListScreen() {
       const recipes = await generateRecipes({
         ingredients: state.sessionIngredients,
         mealTime: state.mealTime,
-        preference: state.preference,
+        preference: state.preference ?? 'savory',
         difficulty: state.filters.difficulty,
         dietary: state.filters.dietary,
         language,
@@ -234,7 +233,7 @@ export default function RecipeListScreen() {
           activeOpacity={0.8}
         >
           {loading ? (
-            <ActivityIndicator color="#4ECDC4" size="small" />
+            <ActivityIndicator color="#FF6B35" size="small" />
           ) : (
             <Text style={styles.regenText}>{t('recipeList.regenerate')}</Text>
           )}
@@ -290,7 +289,7 @@ const styles = StyleSheet.create({
 
   header: { marginBottom: 20 },
   backBtn: { marginBottom: 12 },
-  backText: { fontSize: 24, color: '#4ECDC4', fontWeight: '400' },
+  backText: { fontSize: 24, color: '#FF6B35', fontWeight: '400' },
   title: { fontSize: 32, fontWeight: '800', color: '#1A1A1A', marginBottom: 6 },
   subtitle: { fontSize: 14, color: '#999999' },
 
@@ -318,12 +317,9 @@ const styles = StyleSheet.create({
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08, shadowRadius: 8, elevation: 2,
   },
-  cardImagePlaceholder: {
-    width: 90, height: 90, borderRadius: 12,
-    backgroundColor: '#FFF0EB', alignItems: 'center', justifyContent: 'center',
-    flexShrink: 0,
+  cardImage: {
+    width: 90, height: 90, borderRadius: 12, flexShrink: 0,
   },
-  cardImageEmoji: { fontSize: 36 },
   cardContent: { flex: 1, justifyContent: 'center', gap: 6 },
   cardName: { fontSize: 18, fontWeight: '700', color: '#1A1A1A' },
   cardMeta: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
@@ -338,17 +334,17 @@ const styles = StyleSheet.create({
 
   footer: { gap: 12, marginTop: 8 },
   regenBtn: {
-    borderWidth: 1.5, borderColor: '#4ECDC4', borderRadius: 16,
+    borderWidth: 1.5, borderColor: '#FF6B35', borderRadius: 16,
     height: 52, alignItems: 'center', justifyContent: 'center',
   },
-  regenText: { color: '#4ECDC4', fontWeight: '600', fontSize: 15 },
+  regenText: { color: '#FF6B35', fontWeight: '600', fontSize: 15 },
   aiBtn: {
-    backgroundColor: '#4ECDC4', borderRadius: 16, height: 56,
+    backgroundColor: '#FF6B35', borderRadius: 16, height: 56,
     alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#4ECDC4', shadowOffset: { width: 0, height: 4 },
+    shadowColor: '#FF6B35', shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3, shadowRadius: 8, elevation: 4,
   },
   aiBtnText: { color: '#FFF', fontWeight: '700', fontSize: 17 },
   aiHint: { fontSize: 12, color: '#999', textAlign: 'center' },
-  aiCountNote: { fontSize: 12, color: '#4ECDC4', textAlign: 'center', fontWeight: '600' },
+  aiCountNote: { fontSize: 12, color: '#FF6B35', textAlign: 'center', fontWeight: '600' },
 });

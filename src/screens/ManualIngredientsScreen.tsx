@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1, borderTopColor: '#EEEEEE',
   },
   doneBtn: {
-    backgroundColor: '#1A1A1A', borderRadius: 16, height: 56,
+    backgroundColor: '#FF6B35', borderRadius: 16, height: 56,
     alignItems: 'center', justifyContent: 'center',
   },
   doneBtnText: { color: '#FFFFFF', fontSize: 17, fontWeight: '700' },
